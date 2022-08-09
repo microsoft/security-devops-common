@@ -36,6 +36,18 @@ namespace Microsoft.Security.DevOps.Rules
             }
         }
 
-        public RuleCategory Category { get; set; }
+        private RuleCategory category = RuleCategory.Undefined;
+        public RuleCategory Category
+        {
+            get
+            {
+                return category;
+            }
+            set
+            {
+                category = value;
+                CategoryString = category.ToString();
+            }
+        }
     }
 }

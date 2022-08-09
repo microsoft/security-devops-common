@@ -78,9 +78,13 @@ namespace Microsoft.Security.DevOps.Rules
             RulesInfo? analyzerInfo = GetAnalyzerInfo(query);
 
             // Analyzer
+                // Check alt name
             // Rulesets
+                // Check alt name
             // Rules
+                // check alt id
             // RulePatterns
+                // 
 
             return null;
         }

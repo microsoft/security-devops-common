@@ -18,6 +18,41 @@
       "type": "string"
     },
 
+    "rulesets": {
+      "description": "A dictionary of rulesets.",
+      "$ref": "#/$defs/rulesInfoDictionary"
+    },
+
+    "alternativeRulesetNames": {
+      "description": "Alternative keys to map for rulesets.",
+      "$ref": "#/$defs/stringDictionary"
+    },
+
+    "analyzers": {
+      "description": "A collection of rulesets.",
+      "$ref": "#/$defs/rulesInfoDictionary"
+    },
+
+    "alternativeAnalyzerNames": {
+      "description": "Alternative keys to map for analyzers.",
+      "$ref": "#/$defs/stringDictionary"
+    },
+
+    "rules": {
+      "description": "A collection of rulesets.",
+      "$ref": "#/$defs/rulesDictionary"
+    },
+
+    "alternativeRuleIds": {
+      "description": "Alternative keys to map for rule ids.",
+      "$ref": "#/$defs/stringDictionary"
+    },
+
+    "rulePatterns": {
+      "description": "A collection of rulesets.",
+      "$ref": "#/$defs/rulePatternsArray"
+    },
+
     "properties": {
       "description": "Key/value pairs that provide additional information about the policy file.",
       "$ref": "#/definitions/propertyBag"
@@ -27,21 +62,67 @@
 
   "$defs": {
 
-    "policyControls": {
-      "description": "Policy control options to instruct a policy reader to act in a certain way.",
-      "type": "object"
+    "stringDictionary": {
+      "description": "Policy controls for a specific static analysis rule.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
 
-    "policyTool": {
-      "description": "A static analysis tool definition to set tool-wide and tool-specific policy controls.",
-      "type": "object"
-    },
-    
-    "policyRule": {
+    "rulesInfoDictionary": {
       "description": "Policy controls for a specific static analysis rule.",
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/rulesInfo"
+      }
     },
-    
+
+    "rule": {
+      "description": "Policy control options to instruct a policy reader to act in a certain way.",
+      "type": "object",
+      "properties": {
+
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
+    "ruleCategory": {
+      "description": "A static analysis tool definition to set tool-wide and tool-specific policy controls.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
+    "rulesInfo": {
+      "description": "Policy controls for a specific static analysis rule.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
+    "rulePattern": {
+      "description": "Policy controls for a specific static analysis rule.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
     "propertyBag": {
       "description": "Key/value pairs that provide additional information about the object.",
       "type": "object",

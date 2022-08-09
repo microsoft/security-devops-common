@@ -11,7 +11,7 @@ namespace Microsoft.Security.DevOps.Rules
     using System.Runtime.Serialization;
 
     [DataContract]
-    public class RulesInfo : IRuleCategoryInfo
+    public class RulesInfo : PropertyBag, IRuleCategoryInfo
     {
         [DataMember(Name = "name", EmitDefaultValue = false, Order = 10)]
         public string? Name { get; set; }
@@ -58,10 +58,22 @@ namespace Microsoft.Security.DevOps.Rules
             set
             {
                 categoryString = value;
-                Category = RuleCategoryParser.Instance.Parse(value);
+                category = RuleCategoryParser.Instance.Parse(value);
             }
         }
 
-        public RuleCategory Category { get; set; }
+        private RuleCategory category = RuleCategory.Undefined;
+        public RuleCategory Category
+        {
+            get
+            {
+                return category;
+            }
+            set
+            {
+                category = value;
+                CategoryString = category.ToString();
+            }
+        }
     }
 }
