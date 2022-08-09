@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32602.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Security.DevOps.Rules", "Microsoft.Security.DevOps.Rules\Microsoft.Security.DevOps.Rules.csproj", "{B5CBFB31-26AB-4D1E-8A70-74D2269B8A88}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Security.DevOps.Rules.Tests", "Microsoft.Security.DevOps.Rules.Tests\Microsoft.Security.DevOps.Rules.Tests.csproj", "{5A98F6C9-38A1-4652-A126-E2633CC4C421}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B5CBFB31-26AB-4D1E-8A70-74D2269B8A88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5CBFB31-26AB-4D1E-8A70-74D2269B8A88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5CBFB31-26AB-4D1E-8A70-74D2269B8A88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5CBFB31-26AB-4D1E-8A70-74D2269B8A88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A98F6C9-38A1-4652-A126-E2633CC4C421}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A98F6C9-38A1-4652-A126-E2633CC4C421}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A98F6C9-38A1-4652-A126-E2633CC4C421}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A98F6C9-38A1-4652-A126-E2633CC4C421}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7B5AD8A8-F176-473B-9C88-AF4E0F54AB71}
+	EndGlobalSection
+EndGlobal

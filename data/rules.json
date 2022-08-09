@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/security-devops-policy/$schemata/schema-0.1.0.json",
+  "title": "Microsoft",
+  "version": "0.1.0",
+  "analyzers": {
+    "template-analyzer": {
+      "name": "Best Practice Analyzer",
+      "category": "IaC"
+    }
+  }
+}
