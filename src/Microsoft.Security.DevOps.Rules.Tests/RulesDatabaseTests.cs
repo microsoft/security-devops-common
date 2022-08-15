@@ -6,6 +6,7 @@
 
 namespace Microsoft.Security.DevOps.Rules
 {
+    using Moq.AutoMock;
     using System;
 
     public class RulesDatabaseTests
@@ -13,7 +14,8 @@ namespace Microsoft.Security.DevOps.Rules
         [Fact]
         public void Test()
         {
-
+            var mocker = new AutoMocker();
+            RulesDatabase mocked = mocker.CreateInstance<RulesDatabase>();
         }
     }
 }

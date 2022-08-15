@@ -7,6 +7,7 @@
 namespace Microsoft.Security.DevOps.Rules
 {
     using Microsoft.CodeAnalysis.Sarif;
+    using System.Collections.Generic;
     using System.Runtime.Serialization;
 
     /// <summary>
@@ -18,11 +19,14 @@ namespace Microsoft.Security.DevOps.Rules
     [DataContract]
     public class Rule : ReportingDescriptor, IRuleCategoryInfo
     {
-        public RulesInfo? Parent { get; set; }
+        public RuleCollection? Parent { get; set; }
+
+        [DataMember(Name = "alternativeIds", EmitDefaultValue = false)]
+        public List<string?>? AlternativeIds { get; set; }
 
         private string? categoryString;
 
-        [DataMember(Name = "category", Order = 10)]
+        [DataMember(Name = "category", EmitDefaultValue = false)]
         public string? CategoryString
         {
             get

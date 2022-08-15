@@ -7,13 +7,19 @@
 namespace Microsoft.Security.DevOps.Rules
 {
     using System;
-    using System.Collections.Generic;
 
-    public class RuleList : List<Rule?>
+    public class XunitTestBase<T>
     {
-        public Rule? FindById(string ruleId)
-        {
-            return this.Find(rule => string.Equals(rule?.Id, ruleId));
-        }
+        //public T Mocked
+        //{
+        //    get
+        //    {
+        //        return 
+        //    }
+        //    set
+        //    {
+
+        //    }
+        //}
     }
 }

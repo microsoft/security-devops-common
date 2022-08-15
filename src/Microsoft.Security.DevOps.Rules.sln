@@ -7,6 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Security.DevOps.R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Security.DevOps.Rules.Tests", "Microsoft.Security.DevOps.Rules.Tests\Microsoft.Security.DevOps.Rules.Tests.csproj", "{5A98F6C9-38A1-4652-A126-E2633CC4C421}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "schemata", "schemata", "{454AB608-8817-4333-BA6B-79FFDD16B358}"
+	ProjectSection(SolutionItems) = preProject
+		..\schemata\msdo-rules-schema-0.1.0.json = ..\schemata\msdo-rules-schema-0.1.0.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

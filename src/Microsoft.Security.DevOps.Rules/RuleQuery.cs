@@ -29,5 +29,7 @@ namespace Microsoft.Security.DevOps.Rules
 
         [DataMember(Name = "analyzerVersion", Order = 40)]
         public string? AnalyzerVersion { get; set; }
+
+        internal bool IsValid { get; set; }
     }
 }

@@ -6,45 +6,28 @@
 
 namespace Microsoft.Security.DevOps.Rules
 {
+    using Microsoft.Security.DevOps.Rules.Model;
     using System;
     using System.Collections.Generic;
     using System.Runtime.Serialization;
 
     [DataContract]
-    public class RulesInfo : PropertyBag, IRuleCategoryInfo
+    public class RuleCollection : PropertyBag, IRuleCategoryInfo
     {
         [DataMember(Name = "name", EmitDefaultValue = false, Order = 10)]
         public string? Name { get; set; }
 
+        [DataMember(Name = "alternativeNames", EmitDefaultValue = false, Order = 11)]
+        public List<string?>? AlternativeNames { get; set; }
+
         [DataMember(Name = "version", EmitDefaultValue = false, Order = 20)]
         public string? Version { get; set; }
 
-        private Dictionary<string, Rule?>? rules;
-
         [DataMember(Name = "rules", EmitDefaultValue = false, Order = 100)]
-        public Dictionary<string, Rule?>? Rules
-        {
-            get => rules;
-            set => rules = CaseInsensitiveDictionaryResolver.Instance.Resolve(value);
-        }
-
-        private Dictionary<string, string?>? alternativeRuleIds;
-
-        [DataMember(Name = "alternativeRuleIds", EmitDefaultValue = false, Order = 101)]
-        public Dictionary<string, string?>? AlternativeRuleIds
-        {
-            get => alternativeRuleIds;
-            set => alternativeRuleIds = CaseInsensitiveDictionaryResolver.Instance.Resolve(value);
-        }
-
-        private Dictionary<string, Rule?>? rulePatterns;
+        public List<Rule?>? Rules { get; set; }
 
         [DataMember(Name = "rulePatterns", EmitDefaultValue = false, Order = 110)]
-        public Dictionary<string, Rule?>? RulePatterns
-        {
-            get => rulePatterns;
-            set => rulePatterns = CaseInsensitiveDictionaryResolver.Instance.Resolve(value);
-        }
+        public List<RulePattern?>? RulePatterns { get; set; }
 
         private string? categoryString;
 

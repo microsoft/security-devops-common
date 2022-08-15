@@ -8,9 +8,10 @@ namespace Microsoft.Security.DevOps.Rules
 {
     using System;
     using System.Runtime.Serialization;
+    using System.Text.RegularExpressions;
 
     [DataContract]
-    public class RulePattern : PropertyBagObject
+    public class RulePattern : PropertyBag
     {
         private string? typeString;
 
@@ -46,7 +47,24 @@ namespace Microsoft.Security.DevOps.Rules
             }
         }
 
-        [DataMember(Name = "rule", EmitDefaultValue = false, Order = 10)]
-        public Rule Rule { get; set; }
+        [DataMember(Name = "pattern", EmitDefaultValue = false, Order = 20)]
+        public string? Pattern { get; set; }
+
+        private Regex? regex = null;
+        public Regex? Regex
+        {
+            get
+            {
+                if (regex == null)
+                {
+
+                }
+
+                return regex;
+            }
+        }
+
+        [DataMember(Name = "rule", EmitDefaultValue = false, Order = 30)]
+        public Rule? Rule { get; set; }
     }
 }
