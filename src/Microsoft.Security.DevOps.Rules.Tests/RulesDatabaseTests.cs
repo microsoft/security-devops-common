@@ -10,11 +10,13 @@ namespace Microsoft.Security.DevOps.Rules
     using SuperTestBase;
     using System;
     using System.ComponentModel;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
 
     public class RulesDatabaseTests : TestBase<RulesDatabase>
     {
-        private RulesFile? RulesFile;
+        [AllowNull]
+        private RulesFile RulesFile;
 
         private void SetRulesFile()
         {
@@ -31,6 +33,8 @@ namespace Microsoft.Security.DevOps.Rules
         [Category("Unit")]
         public void RulesFile_get()
         {
+            SetupCallBase(mock => mock.RulesFile);
+
             RulesFile actual = Mocked.RulesFile;
 
             // It doesn't actually set rulesFile
@@ -44,16 +48,11 @@ namespace Microsoft.Security.DevOps.Rules
 
         #region void Load()
 
-        private void SetupLoad()
-        {
-            SetupCallBase(mock => mock.Load());
-        }
-
         [Fact]
         [Category("Unit")]
         public void Load()
         {
-            SetupLoad();
+            SetupCallBase(mock => mock.Load());
 
             Mocked.Load();
 
@@ -65,16 +64,11 @@ namespace Microsoft.Security.DevOps.Rules
 
         #region void Load(string filePath)
 
-        private void SetupLoadFilePath()
-        {
-            SetupCallBase(mock => mock.Load(It.IsAny<string>()));
-        }
-
         [Fact]
         [Category("Unit")]
         public void Load_FilePath()
         {
-            SetupLoadFilePath();
+            SetupCallBase(mock => mock.Load(It.IsAny<string>()));
 
             Mocked.Load("filePath.fake");
 
@@ -85,6 +79,100 @@ namespace Microsoft.Security.DevOps.Rules
 
         // T? Read<T>(string filePath)
         // Covered by functional test
+
+        // TODO: Rule? GetRule(RuleQuery? query)
+
+        #region RuleCollection? GetAnalyzer(RuleQuery? query)
+
+        private void SetupGetAnalyzer(
+            out RuleQuery query,
+            out RuleCollection? expected)
+        {
+            SetupCallBase(mock => mock.GetAnalyzer(It.IsAny<RuleQuery?>()));
+
+            query = new RuleQuery()
+            {
+                AnalyzerName = "AnalyzerName.fake"
+            };
+
+            expected = new RuleCollection()
+            {
+                Name = "GetAnalyzer"
+            };
+
+            SetRulesFile();
+            RulesFile.Analyzers = new List<RuleCollection?>()
+            {
+                expected
+            };
+
+            MockObject
+                .Setup(mock => mock.FindRuleCollectionByName(It.IsAny<string>(), It.IsAny<List<RuleCollection?>?>(), It.IsAny<bool>()))
+                .Returns(expected);
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void GetAnalyzer()
+        {
+            SetupGetAnalyzer(
+                out RuleQuery query,
+                out RuleCollection? expected);
+
+            RuleCollection? actual = Mocked.GetAnalyzer(query);
+
+            Assert.Equal(expected, actual);
+
+            MockObject.Verify(mock => mock.FindRuleCollectionByName("AnalyzerName.fake", RulesFile.Analyzers, true));
+        }
+
+        #endregion RuleCollection? GetAnalyzer(RuleQuery? query)
+
+        #region RuleCollection? GetRuleset(RuleQuery? query)
+
+        private void SetupGetRuleset(
+            out RuleQuery query,
+            out RuleCollection? expected)
+        {
+            SetupCallBase(mock => mock.GetRuleset(It.IsAny<RuleQuery?>()));
+
+            query = new RuleQuery()
+            {
+                RulesetName = "RulesetName.fake"
+            };
+
+            expected = new RuleCollection()
+            {
+                Name = "GetRuleset"
+            };
+
+            SetRulesFile();
+            RulesFile.Rulesets = new List<RuleCollection?>()
+            {
+                expected
+            };
+
+            MockObject
+                .Setup(mock => mock.FindRuleCollectionByName(It.IsAny<string>(), It.IsAny<List<RuleCollection?>?>(), It.IsAny<bool>()))
+                .Returns(expected);
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void GetRuleset()
+        {
+            SetupGetRuleset(
+                out RuleQuery query,
+                out RuleCollection? expected);
+
+            RuleCollection? actual = Mocked.GetRuleset(query);
+
+            Assert.Equal(expected, actual);
+
+            MockObject.Verify(mock => mock.FindRuleCollectionByName("RulesetName.fake", RulesFile.Rulesets, true));
+        }
+
+        #endregion RuleCollection? GetRuleset(RuleQuery? query)
 
         #region RuleCategory GetCategoryEnum(RuleQuery? query)
 
@@ -171,46 +259,101 @@ namespace Microsoft.Security.DevOps.Rules
 
         #endregion RuleCategory GetCategoryString(RuleQuery? query)
 
-        #region RuleCollection? GetAnalyzer(RuleQuery? query)
+        #region void Validate([NotNull] RuleQuery? query)
 
-        private void SetupGetAnalyzer(
-            out RuleQuery query,
-            out RuleCollection? expected)
+        private void SetupValidate(
+            out RuleQuery query)
         {
-            SetupCallBase(mock => mock.GetAnalyzer(It.IsAny<RuleQuery?>()));
+            SetupCallBase(mock => mock.Validate(It.IsAny<RuleQuery?>()));
 
-            query = new RuleQuery()
-            {
-                AnalyzerName = "AnalyzerName.fake"
-            };
-
-            expected = new RuleCollection()
-            {
-                Name = "GetAnalyzer"
-            };
-
-            SetRulesFile();
-            RulesFile.Analyzers = new List<RuleCollection?>()
-            {
-                expected
-            };
+            query = new RuleQuery();
         }
 
         [Fact]
         [Trait("Category", "Unit")]
-        public void GetAnalyzer()
+        public void Validate_Null()
         {
-            SetupGetAnalyzer(
-                out RuleQuery query,
-                out RuleCollection? expected);
+            SetupValidate(
+                out RuleQuery query);
 
-            RuleCollection? actual = Mocked.GetAnalyzer(query);
+            query = null;
 
-            Assert.Equal(expected, actual);
-
-            Mocked.FindRuleCollectionByName(Mocked.RulesFile.Analyzers, "AnalyzerName.fake", true);
+            Assert.Throws<ArgumentNullException>("query", () => Mocked.Validate(query));
         }
 
-        #endregion RuleCollection? GetAnalyzer(RuleQuery? query)
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void Validate_RuleId()
+        {
+            SetupValidate(
+                out RuleQuery query);
+
+            query.RuleId = "RuleId.fake";
+            Assert.Equal(QueryType.Undefined, query.Type);
+
+            Mocked.Validate(query);
+
+            Assert.Equal(QueryType.FindRule, query.Type);
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void Validate_AnalyzerName()
+        {
+            SetupValidate(
+                out RuleQuery query);
+
+            query.AnalyzerName = "AnalyzerName.fake";
+            Assert.Equal(QueryType.Undefined, query.Type);
+
+            Mocked.Validate(query);
+
+            Assert.Equal(QueryType.FindAnalyzer, query.Type);
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void Validate_RulesetName()
+        {
+            SetupValidate(
+                out RuleQuery query);
+
+            query.RulesetName = "RulesetName.fake";
+            Assert.Equal(QueryType.Undefined, query.Type);
+
+            Mocked.Validate(query);
+
+            Assert.Equal(QueryType.FindRuleset, query.Type);
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void Validate_RuleQueryInsufficientArgumentsException()
+        {
+            SetupValidate(
+                out RuleQuery query);
+
+            Assert.Throws<RuleQueryInsufficientArgumentsException>(() => Mocked.Validate(query));
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void Validate_All()
+        {
+            SetupValidate(
+                out RuleQuery query);
+
+            query.RuleId = "RuleId.fake";
+            query.AnalyzerName = "AnalyzerName.fake";
+            query.RulesetName = "RulesetName.fake";
+            query.All = true;
+            Assert.Equal(QueryType.Undefined, query.Type);
+
+            Mocked.Validate(query);
+
+            Assert.Equal(QueryType.All, query.Type);
+        }
+
+        #endregion void Validate([NotNull] RuleQuery? query)
     }
 }

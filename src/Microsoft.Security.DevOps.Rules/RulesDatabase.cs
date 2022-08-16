@@ -13,7 +13,7 @@ namespace Microsoft.Security.DevOps.Rules
     public class RulesDatabase : IRulesDatabase
     {
         private RulesFile? rulesFile;
-        public RulesFile RulesFile
+        public virtual RulesFile RulesFile
         {
             get
             {
@@ -164,12 +164,12 @@ namespace Microsoft.Security.DevOps.Rules
 
         public virtual RuleCollection? GetAnalyzer(RuleQuery? query)
         {
-            return FindRuleCollectionByName(RulesFile.Analyzers, query?.AnalyzerName, true);
+            return FindRuleCollectionByName(query?.AnalyzerName, RulesFile.Analyzers, true);
         }
 
         public virtual RuleCollection? GetRuleset(RuleQuery? query)
         {
-            return FindRuleCollectionByName(RulesFile.Rulesets, query?.RulesetName, true);
+            return FindRuleCollectionByName(query?.RulesetName, RulesFile.Rulesets, true);
         }
 
         public virtual RuleCategory GetCategoryEnum(RuleQuery? query)
@@ -233,7 +233,9 @@ namespace Microsoft.Security.DevOps.Rules
             return !string.IsNullOrWhiteSpace(ruleId) && (rulePattern?.Regex?.IsMatch(ruleId) ?? false);
         }
 
-        public virtual RuleCollection? FindRuleCollectionByName(List<RuleCollection?>? ruleCollections, string? name)
+        public virtual RuleCollection? FindRuleCollectionByName(
+            string? name,
+            List<RuleCollection?>? ruleCollections)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -244,8 +246,8 @@ namespace Microsoft.Security.DevOps.Rules
         }
 
         public virtual RuleCollection? FindRuleCollectionByName(
-            List<RuleCollection?>? ruleCollections,
             string? name,
+            List<RuleCollection?>? ruleCollections,
             bool searchAlternativeNames)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -253,7 +255,7 @@ namespace Microsoft.Security.DevOps.Rules
                 return null;
             }
 
-            RuleCollection? ruleCollection = FindRuleCollectionByName(ruleCollections, name);
+            RuleCollection? ruleCollection = FindRuleCollectionByName(name, ruleCollections);
 
             if (ruleCollection is null & searchAlternativeNames)
             {

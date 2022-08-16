@@ -12,13 +12,17 @@
       "category": "Secrets"
     },
     {
-      "name": "template-analyzer",
+      "name": "templateanalyzer",
       "alternativeNames": [
-        "TemplateAnalyzer",
+        "template-analyzer",
         "Template Analyzer",
         "BPA",
         "Best Practice Analyzer"
       ],
+      "category": "IaC"
+    },
+    {
+      "name": "terrascan",
       "category": "IaC"
     }
   ]
