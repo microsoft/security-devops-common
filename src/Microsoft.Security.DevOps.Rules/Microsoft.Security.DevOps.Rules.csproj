@@ -8,6 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="../../data/microsoft.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="../../data/microsoft.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="Sarif.Sdk" Version="2.4.15" />
   </ItemGroup>
