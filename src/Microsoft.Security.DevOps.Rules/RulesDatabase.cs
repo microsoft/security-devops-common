@@ -342,6 +342,21 @@ namespace Microsoft.Security.DevOps.Rules
                 throw new ArgumentNullException(nameof(query));
             }
 
+            if (!string.IsNullOrWhiteSpace(query.RuleId))
+            {
+                query.Type = QueryType.FindRule;
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.AnalyzerName))
+            {
+                query.Type = QueryType.FindAnalyzer;
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.RulesetName))
+            {
+                query.Type = QueryType.FindRuleset;
+            }
+
             if (query.Type == QueryType.Undefined)
             {
                 throw new RuleQueryInsufficientArgumentsException(query);

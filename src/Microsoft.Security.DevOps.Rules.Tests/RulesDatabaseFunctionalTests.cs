@@ -19,7 +19,8 @@ namespace Microsoft.Security.DevOps.Rules
         {
             var ruleQuery = new RuleQuery()
             {
-                AnalyzerName = "template-analyzer"
+                AnalyzerName = "template-analyzer",
+                RuleId = "CA2000"
             };
 
             RuleCategory actual = RulesDatabase.GetCategoryEnum(ruleQuery);
