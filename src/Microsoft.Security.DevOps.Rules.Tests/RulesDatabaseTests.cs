@@ -4,18 +4,18 @@
 //  *                                                       *
 //  ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules.Tests
+namespace Microsoft.Security.DevOps.Rules
 {
-    using Moq.AutoMock;
     using System;
+    using System.ComponentModel;
 
     public class RulesDatabaseTests
     {
         [Fact]
+        [Category("Integration")]
         public void Test()
         {
-            var mocker = new AutoMocker();
-            RulesDatabase mocked = mocker.CreateInstance<RulesDatabase>();
+            
         }
     }
 }

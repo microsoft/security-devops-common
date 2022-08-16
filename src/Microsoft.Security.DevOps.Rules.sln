@@ -5,11 +5,23 @@ VisualStudioVersion = 17.2.32602.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Security.DevOps.Rules", "Microsoft.Security.DevOps.Rules\Microsoft.Security.DevOps.Rules.csproj", "{B5CBFB31-26AB-4D1E-8A70-74D2269B8A88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Security.DevOps.Rules.Tests", "Microsoft.Security.DevOps.Rules.Tests\Microsoft.Security.DevOps.Rules.Tests.csproj", "{5A98F6C9-38A1-4652-A126-E2633CC4C421}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Security.DevOps.Rules.Tests", "Microsoft.Security.DevOps.Rules.Tests\Microsoft.Security.DevOps.Rules.Tests.csproj", "{5A98F6C9-38A1-4652-A126-E2633CC4C421}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "schemata", "schemata", "{454AB608-8817-4333-BA6B-79FFDD16B358}"
 	ProjectSection(SolutionItems) = preProject
 		..\schemata\msdo-rules-schema-0.1.0.json = ..\schemata\msdo-rules-schema-0.1.0.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{EB847C03-CD1E-4A50-9604-5CC19E5B7119}"
+	ProjectSection(SolutionItems) = preProject
+		..\CODE_OF_CONDUCT.md = ..\CODE_OF_CONDUCT.md
+		..\LICENSE = ..\LICENSE
+		..\Open-SideloadSolution.ps1 = ..\Open-SideloadSolution.ps1
+		..\README.md = ..\README.md
+		..\SECURITY.md = ..\SECURITY.md
+		..\Sideload.json = ..\Sideload.json
+		..\Sideload.props = ..\Sideload.props
+		..\SUPPORT.md = ..\SUPPORT.md
 	EndProjectSection
 EndProject
 Global

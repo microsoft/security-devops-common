@@ -1,0 +1,14 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <RepoDirectory Condition = " '$(RepoDirectory)' != '' ">$(MSBuildThisFileDirectory)</RepoDirectory>
+    <ReposDirectory Condition = " '$(ReposDirectory)' != '' ">$(RepoDirectory)/..</ReposDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Sideload">
+    <!-- Only turn on Sideload when working on a dependent change. -->
+    <!-- Otherwise, reference the shipped package. -->
+    <Sideload Condition=" '$(Sideload)' == '' ">true</Sideload>
+  </PropertyGroup>
+
+</Project>
