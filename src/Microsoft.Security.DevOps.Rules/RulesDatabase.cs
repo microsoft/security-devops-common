@@ -156,6 +156,22 @@ namespace Microsoft.Security.DevOps.Rules
             return result;
         }
 
+        public virtual Rule? GetRule(RuleQuery? query)
+        {
+            QueryResult result = Query(query);
+            return result?.Rule;
+        }
+
+        public virtual RuleCollection? GetAnalyzer(RuleQuery? query)
+        {
+            return FindRuleCollectionByName(RulesFile.Analyzers, query?.AnalyzerName, true);
+        }
+
+        public virtual RuleCollection? GetRuleset(RuleQuery? query)
+        {
+            return FindRuleCollectionByName(RulesFile.Rulesets, query?.RulesetName, true);
+        }
+
         public virtual RuleCategory GetCategoryEnum(RuleQuery? query)
         {
             QueryResult result = Query(query);
@@ -166,16 +182,6 @@ namespace Microsoft.Security.DevOps.Rules
         {
             QueryResult result = Query(query);
             return result?.CategoryString;
-        }
-
-        internal virtual RuleCollection? GetAnalyzer(RuleQuery? query)
-        {
-            return FindRuleCollectionByName(RulesFile.Analyzers, query?.AnalyzerName, true);
-        }
-
-        public virtual RuleCollection? GetRuleset(RuleQuery? query)
-        {
-            return FindRuleCollectionByName(RulesFile.Rulesets, query?.RulesetName, true);
         }
 
         public virtual Rule? FindRuleById(string? ruleId, List<Rule?>? rules)
@@ -249,7 +255,7 @@ namespace Microsoft.Security.DevOps.Rules
 
             RuleCollection? ruleCollection = FindRuleCollectionByName(ruleCollections, name);
 
-            if (name is null & searchAlternativeNames)
+            if (ruleCollection is null & searchAlternativeNames)
             {
                 ruleCollection = ruleCollections?.Find(ruleCollection => ruleCollection?.AlternativeNames?.Contains(name, StringComparer.OrdinalIgnoreCase) == true);
             }

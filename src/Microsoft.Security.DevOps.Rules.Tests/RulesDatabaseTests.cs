@@ -14,6 +14,17 @@ namespace Microsoft.Security.DevOps.Rules
 
     public class RulesDatabaseTests : TestBase<RulesDatabase>
     {
+        private RulesFile? RulesFile;
+
+        private void SetRulesFile()
+        {
+            RulesFile = new RulesFile();
+
+            MockObject
+                .SetupGet(mock => mock.RulesFile)
+                .Returns(RulesFile);
+        }
+
         #region RulesFile:get
 
         [Fact]
@@ -46,7 +57,7 @@ namespace Microsoft.Security.DevOps.Rules
 
             Mocked.Load();
 
-            string expected = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "rules.json"); ;
+            string expected = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "microsoft.json"); ;
             MockObject.Verify(mock => mock.Load(expected), Times.Once);
         }
 
@@ -162,18 +173,40 @@ namespace Microsoft.Security.DevOps.Rules
 
         #region RuleCollection? GetAnalyzer(RuleQuery? query)
 
-        private void SetupGetAnalyzer()
+        private void SetupGetAnalyzer(
+            out RuleQuery query,
+            out RuleCollection? expected)
         {
             SetupCallBase(mock => mock.GetAnalyzer(It.IsAny<RuleQuery?>()));
+
+            query = new RuleQuery()
+            {
+                AnalyzerName = "AnalyzerName.fake"
+            };
+
+            expected = new RuleCollection()
+            {
+                Name = "GetAnalyzer"
+            };
+
+            SetRulesFile();
+            RulesFile.Analyzers = new List<RuleCollection?>()
+            {
+                expected
+            };
         }
 
         [Fact]
         [Trait("Category", "Unit")]
         public void GetAnalyzer()
         {
-            RuleQuery? query
+            SetupGetAnalyzer(
+                out RuleQuery query,
+                out RuleCollection? expected);
 
-            RuleCollection? actual = Mocked.GetAnalyzer();
+            RuleCollection? actual = Mocked.GetAnalyzer(query);
+
+            Assert.Equal(expected, actual);
 
             Mocked.FindRuleCollectionByName(Mocked.RulesFile.Analyzers, "AnalyzerName.fake", true);
         }
