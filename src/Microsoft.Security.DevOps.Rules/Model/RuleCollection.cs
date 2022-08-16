@@ -19,9 +19,6 @@ namespace Microsoft.Security.DevOps.Rules.Model
         [DataMember(Name = "alternativeNames", EmitDefaultValue = false, Order = 11)]
         public List<string?>? AlternativeNames { get; set; }
 
-        [DataMember(Name = "version", EmitDefaultValue = false, Order = 20)]
-        public string? Version { get; set; }
-
         [DataMember(Name = "rules", EmitDefaultValue = false, Order = 100)]
         public List<Rule?>? Rules { get; set; }
 

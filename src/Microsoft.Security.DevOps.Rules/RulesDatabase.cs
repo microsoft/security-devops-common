@@ -17,7 +17,7 @@ namespace Microsoft.Security.DevOps.Rules
         {
             get
             {
-                if (rulesFile == null)
+                if (rulesFile is null)
                 {
                     Load();
                 }
@@ -49,22 +49,148 @@ namespace Microsoft.Security.DevOps.Rules
             return JsonConvert.DeserializeObject<T>(contents);
         }
 
+        public virtual QueryResult Query(RuleQuery? query)
+        {
+            Validate(query);
+
+            var result = new QueryResult(query);
+
+            QueryAnalyzers(query, result);
+
+            if (query.Type == QueryType.FindAnalyzer)
+            {
+                return result;
+            }
+
+            if (query.Type == QueryType.FindRule && result.Rule != null)
+            {
+                return result;
+            }
+
+            QueryRuleset(query, result);
+
+            if (query.Type == QueryType.FindRuleset)
+            {
+                return result;
+            }
+
+            if (query.Type == QueryType.FindRule && result.Rule != null)
+            {
+                return result;
+            }
+
+            QueryRules(query, RulesFile, result);
+
+            return result;
+        }
+
+        internal virtual QueryResult QueryAnalyzers(RuleQuery query, QueryResult? result = null)
+        {
+            result ??= new QueryResult(query);
+
+            result.Analyzer = GetAnalyzer(query);
+            result.Rule = FindRuleById(query?.RuleId, result.Analyzer?.Rules);
+
+            return result;
+        }
+
+        internal virtual QueryResult QueryRuleset(RuleQuery query, QueryResult? result = null)
+        {
+            result ??= new QueryResult(query);
+
+            result.Ruleset = GetRuleset(query);
+            result.Rule = FindRuleById(query?.RuleId, result.Ruleset?.Rules);
+
+            return result;
+        }
+
+        internal virtual QueryResult QueryRules(RuleQuery query, RuleCollection? ruleCollection, QueryResult? result = null)
+        {
+            result ??= new QueryResult(query);
+
+            if (query is null)
+            {
+                throw new ArgumentNullException(nameof(query));
+            }
+
+            if (ruleCollection is null)
+            {
+                return result;
+            }
+
+            result.Rule = FindRuleById(query?.RuleId, ruleCollection?.Rules);
+
+            if (query.Type == QueryType.FindRule && result.Rule != null)
+            {
+                return result;
+            }
+
+            QueryRulePattern(query, ruleCollection?.RulePatterns);
+
+            return result;
+        }
+
+        internal virtual QueryResult QueryRulePattern(RuleQuery query, List<RulePattern?>? rulePatterns, QueryResult? result = null)
+        {
+            result ??= new QueryResult(query);
+
+            Rule? rule = null;
+
+            if (query.Type != QueryType.FindRule
+                || query.Type != QueryType.FindRule
+                || rulePatterns?.Any() != true)
+            {
+                return rule;
+            }
+
+            foreach (RulePattern? rulePattern in rulePatterns)
+            {
+                if (IsMatch(ruleId, rulePattern))
+                {
+                    rule = rulePattern?.Rule;
+                    break;
+                }
+            }
+
+            return rule;
+
+            return result;
+        }
+
         public virtual IRuleCategoryInfo? GetCategoryInfo(RuleQuery? query)
         {
+            QueryResult result = Query(query);
+
+            if (result.Rule != null)
+            {
+                return result.Rule;
+            }
+
+            if (result.Analyzer != null)
+            {
+                return result.Analyzer;
+            }
+
+            if (result.Ruleset != null)
+            {
+                return result.Ruleset;
+            }
+
             return GetRule(query);
         }
 
         public virtual RuleCategory GetCategoryEnum(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = GetRule(query);
+            IRuleCategoryInfo? info = GetCategoryInfo(query);
             return info?.Category ?? RuleCategory.Undefined;
         }
 
         public virtual string? GetCategoryString(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = GetRule(query);
+            IRuleCategoryInfo? info = GetCategoryInfo(query);
             return info?.CategoryString;
         }
+
 
         public virtual Rule? GetRule(RuleQuery? query)
         {
@@ -93,9 +219,14 @@ namespace Microsoft.Security.DevOps.Rules
 
         public virtual Rule? GetRule(RuleQuery? query, RuleCollection? ruleCollection)
         {
-            if (query == null)
+            if (query is null)
             {
                 throw new ArgumentNullException(nameof(query));
+            }
+
+            if (ruleCollection is null)
+            {
+                return null;
             }
 
             Rule? rule = FindRuleById(query?.RuleId, ruleCollection?.Rules);
@@ -115,7 +246,7 @@ namespace Microsoft.Security.DevOps.Rules
 
         public virtual Rule? GetAnalyzerRule(RuleQuery? query)
         {
-            if (query == null)
+            if (query is null)
             {
                 throw new ArgumentNullException(nameof(query));
             }
@@ -133,7 +264,7 @@ namespace Microsoft.Security.DevOps.Rules
 
         public virtual Rule? GetRulesetRule(RuleQuery? query)
         {
-            if (query == null)
+            if (query is null)
             {
                 throw new ArgumentNullException(nameof(query));
             }
@@ -157,7 +288,7 @@ namespace Microsoft.Security.DevOps.Rules
         {
             Rule? rule = FindRuleById(ruleId, rules);
 
-            if (rule == null && (searchAlternativeIds || searchDeprecatedIds))
+            if (rule is null && (searchAlternativeIds || searchDeprecatedIds))
             {
                 rule = rules?.Find(rule =>
                     searchAlternativeIds && rule?.AlternativeIds?.Contains(ruleId, StringComparer.OrdinalIgnoreCase) == true
@@ -195,6 +326,11 @@ namespace Microsoft.Security.DevOps.Rules
 
         public virtual RuleCollection? FindRuleCollectionByName(List<RuleCollection?>? ruleCollections, string? name)
         {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
             return ruleCollections?.Find(rulesInfo => string.Equals(rulesInfo?.Name, name, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -203,9 +339,14 @@ namespace Microsoft.Security.DevOps.Rules
             string? name,
             bool searchAlternativeNames)
         {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
             RuleCollection? ruleCollection = FindRuleCollectionByName(ruleCollections, name);
 
-            if (name == null & searchAlternativeNames)
+            if (name is null & searchAlternativeNames)
             {
                 ruleCollection = ruleCollections?.Find(ruleCollection => ruleCollection?.AlternativeNames?.Contains(name, StringComparer.OrdinalIgnoreCase) == true);
             }
@@ -215,17 +356,19 @@ namespace Microsoft.Security.DevOps.Rules
 
         internal virtual void Validate(RuleQuery? query)
         {
-            if (query == null)
+            if (query is null)
             {
                 throw new ArgumentNullException(nameof(query));
             }
 
-            if (string.IsNullOrWhiteSpace(query.RuleId)
-                && string.IsNullOrWhiteSpace(query.AnalyzerName)
-                && string.IsNullOrWhiteSpace(query.RulesetName)
-                && string.IsNullOrWhiteSpace(query.RulePattern))
+            if (query.Type == QueryType.Undefined)
             {
                 throw new RuleQueryInsufficientArgumentsException(query);
+            }
+
+            if (query.All)
+            {
+                query.Type = QueryType.All;
             }
         }
     }

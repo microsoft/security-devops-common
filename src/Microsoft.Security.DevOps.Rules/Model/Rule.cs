@@ -19,7 +19,13 @@ namespace Microsoft.Security.DevOps.Rules.Model
     [DataContract]
     public class Rule : ReportingDescriptor, IRuleCategoryInfo
     {
+        /// <summary>
+        /// In memory.
+        /// </summary>
         public RuleCollection? Parent { get; set; }
+
+        // In memeory
+        public RulePattern? Pattern { get; set; }
 
         [DataMember(Name = "alternativeIds", EmitDefaultValue = false)]
         public List<string?>? AlternativeIds { get; set; }
