@@ -4,7 +4,7 @@
 //  *                                                       *
 //  ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules
+namespace Microsoft.Security.DevOps.Rules.Model
 {
     using System;
     using System.Runtime.Serialization;
@@ -50,14 +50,17 @@ namespace Microsoft.Security.DevOps.Rules
         [DataMember(Name = "pattern", EmitDefaultValue = false, Order = 20)]
         public string? Pattern { get; set; }
 
+        [DataMember(Name = "ignoreCase", EmitDefaultValue = false, Order = 21)]
+        public bool? IgnoreCase { get; set; }
+
         private Regex? regex = null;
         public Regex? Regex
         {
             get
             {
-                if (regex == null)
+                if (regex == null && !string.IsNullOrWhiteSpace(Pattern))
                 {
-
+                    regex = new Regex(Pattern, IgnoreCase == true ? RegexOptions.IgnoreCase : RegexOptions.None);
                 }
 
                 return regex;

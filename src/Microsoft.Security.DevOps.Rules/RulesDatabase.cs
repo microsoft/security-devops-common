@@ -6,6 +6,8 @@
 
 namespace Microsoft.Security.DevOps.Rules
 {
+    using Microsoft.Security.DevOps.Rules.Interfaces;
+    using Microsoft.Security.DevOps.Rules.Model;
     using Newtonsoft.Json;
     using System.Diagnostics.CodeAnalysis;
 
@@ -189,6 +191,7 @@ namespace Microsoft.Security.DevOps.Rules
                 if (IsMatch(ruleId, rulePattern))
                 {
                     rule = rulePattern?.Rule;
+                    break;
                 }
             }
 

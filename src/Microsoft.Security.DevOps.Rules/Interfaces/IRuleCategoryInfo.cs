@@ -4,8 +4,9 @@
 //  *                                                       *
 //  ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules
+namespace Microsoft.Security.DevOps.Rules.Interfaces
 {
+    using Microsoft.Security.DevOps.Rules.Model;
     using System;
 
     public interface IRuleCategoryInfo

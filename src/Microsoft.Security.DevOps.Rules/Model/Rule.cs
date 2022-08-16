@@ -4,9 +4,10 @@
 // *                                                       *
 // ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules
+namespace Microsoft.Security.DevOps.Rules.Model
 {
     using Microsoft.CodeAnalysis.Sarif;
+    using Microsoft.Security.DevOps.Rules.Interfaces;
     using System.Collections.Generic;
     using System.Runtime.Serialization;
 

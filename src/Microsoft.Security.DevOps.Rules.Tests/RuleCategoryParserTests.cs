@@ -4,8 +4,10 @@
 //  *                                                       *
 //  ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules
+namespace Microsoft.Security.DevOps.Rules.Tests
 {
+    using Microsoft.Security.DevOps.Rules.Model;
+
     public class RuleCategoryParserTests
     {
         [Theory]

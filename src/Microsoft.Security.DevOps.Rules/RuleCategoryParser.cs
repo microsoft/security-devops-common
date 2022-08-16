@@ -6,6 +6,8 @@
 
 namespace Microsoft.Security.DevOps.Rules
 {
+    using Microsoft.Security.DevOps.Rules.Interfaces;
+    using Microsoft.Security.DevOps.Rules.Model;
     using System;
     using System.Text.RegularExpressions;
 

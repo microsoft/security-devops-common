@@ -4,7 +4,7 @@
 //  *                                                       *
 //  ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules
+namespace Microsoft.Security.DevOps.Rules.Model
 {
     using System;
     using System.Collections.Generic;
