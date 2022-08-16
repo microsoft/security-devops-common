@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/security-devops-rules/main/schemata/msdo-rules-schema-0.1.0.json",
+  "title": "Microsoft Security DevOps Rules Format (MSDORF) Version 0.1.0 JSON Schema",
+  "description": "Microsoft Security DevOps Rules Format (MSDORF) Version 0.1.0 JSON Schema: a standard rules format for overriding rule definitions of static analysis tools.",
+  "additionalProperties": false,
+  "type": "object",
+  "properties": {
+
+    "$schema": {
+      "description": "The URI of the JSON schema corresponding to the version.",
+      "type": "string",
+      "format": "uri"
+    },
+
+    "version": {
+      "description": "The version of this file or data.",
+      "type": "string"
+    },
+
+    "rulesets": {
+      "description": "A dictionary of rulesets.",
+      "$ref": "#/$defs/rulesInfoDictionary"
+    },
+
+    "alternativeRulesetNames": {
+      "description": "Alternative keys to map for rulesets.",
+      "$ref": "#/$defs/stringDictionary"
+    },
+
+    "analyzers": {
+      "description": "A collection of rulesets.",
+      "$ref": "#/$defs/rulesInfoDictionary"
+    },
+
+    "alternativeAnalyzerNames": {
+      "description": "Alternative keys to map for analyzers.",
+      "$ref": "#/$defs/stringDictionary"
+    },
+
+    "rules": {
+      "description": "A collection of rulesets.",
+      "$ref": "#/$defs/rulesDictionary"
+    },
+
+    "alternativeRuleIds": {
+      "description": "Alternative keys to map for rule ids.",
+      "$ref": "#/$defs/stringDictionary"
+    },
+
+    "rulePatterns": {
+      "description": "A collection of rulesets.",
+      "$ref": "#/$defs/rulePatternsArray"
+    },
+
+    "properties": {
+      "description": "Key/value pairs that provide additional information about the policy file.",
+      "$ref": "#/definitions/propertyBag"
+    }
+
+  },
+
+  "$defs": {
+
+    "stringDictionary": {
+      "description": "Policy controls for a specific static analysis rule.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+
+    "rulesInfoDictionary": {
+      "description": "Policy controls for a specific static analysis rule.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/rulesInfo"
+      }
+    },
+
+    "rule": {
+      "description": "Policy control options to instruct a policy reader to act in a certain way.",
+      "type": "object",
+      "properties": {
+
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
+    "ruleCategory": {
+      "description": "A static analysis tool definition to set tool-wide and tool-specific policy controls.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
+    "rulesInfo": {
+      "description": "Policy controls for a specific static analysis rule.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
+    "rulePattern": {
+      "description": "Policy controls for a specific static analysis rule.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "description": "Key/value pairs that provide additional information about the policy file.",
+          "$ref": "#/definitions/propertyBag"
+        }
+      }
+    },
+
+    "propertyBag": {
+      "description": "Key/value pairs that provide additional information about the object.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tags": {
+          "description": "A set of distinct strings that provide additional information.",
+          "type": "array",
+          "minItems": 0,
+          "uniqueItems": true,
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+
+  }
+}
