@@ -8,7 +8,6 @@ namespace Microsoft.Security.DevOps.Rules
 {
     using Microsoft.Security.DevOps.Rules.Model;
     using System;
-    using System.Text.RegularExpressions;
 
     /// <summary>
     /// Parses <see cref="RuleCategory"/> enums from strings.

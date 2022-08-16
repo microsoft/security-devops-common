@@ -41,7 +41,7 @@ namespace Microsoft.Security.DevOps.Rules
 
                 return success.Value;
             }
-            internal set
+            set
             {
                 success = value;
             }

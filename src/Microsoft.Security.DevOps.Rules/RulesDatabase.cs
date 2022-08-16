@@ -89,7 +89,7 @@ namespace Microsoft.Security.DevOps.Rules
             result ??= new QueryResult(query);
 
             result.Analyzer = GetAnalyzer(query);
-            result.Rule = FindRuleById(query?.RuleId, result.Analyzer?.Rules);
+            result.Rule = FindRuleById(query?.RuleId, result.Analyzer?.Rules, true, true);
 
             return result;
         }
@@ -99,7 +99,7 @@ namespace Microsoft.Security.DevOps.Rules
             result ??= new QueryResult(query);
 
             result.Ruleset = GetRuleset(query);
-            result.Rule = FindRuleById(query?.RuleId, result.Ruleset?.Rules);
+            result.Rule = FindRuleById(query?.RuleId, result.Ruleset?.Rules, true, true);
 
             return result;
         }
@@ -156,104 +156,26 @@ namespace Microsoft.Security.DevOps.Rules
             return result;
         }
 
-        public virtual IRuleCategoryInfo? GetCategoryInfo(RuleQuery? query)
-        {
-            return Query(query);
-        }
-
         public virtual RuleCategory GetCategoryEnum(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = Query(query);
-            return info?.Category ?? RuleCategory.Undefined;
+            QueryResult result = Query(query);
+            return result?.Category ?? RuleCategory.Undefined;
         }
 
         public virtual string? GetCategoryString(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = Query(query);
-            return info?.CategoryString;
+            QueryResult result = Query(query);
+            return result?.CategoryString;
         }
 
-        public virtual Rule? GetRule(RuleQuery? query)
+        internal virtual RuleCollection? GetAnalyzer(RuleQuery? query)
         {
-            Validate(query);
-
-            Rule? rule = null;
-
-            rule = GetAnalyzerRule(query);
-
-            if (rule != null)
-            {
-                return rule;
-            }
-
-            rule = GetRulesetRule(query);
-
-            if (rule != null)
-            {
-                return rule;
-            }
-
-            rule = GetRule(query, RulesFile);
-
-            return rule;
-        }
-
-        public virtual Rule? GetRule(RuleQuery? query, RuleCollection? ruleCollection)
-        {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
-
-            if (ruleCollection is null)
-            {
-                return null;
-            }
-
-            Rule? rule = FindRuleById(query?.RuleId, ruleCollection?.Rules);
-
-            if (rule != null)
-            {
-                return rule;
-            }
-
-            return FindRuleByPattern(query?.RuleId, ruleCollection?.RulePatterns);
-        }
-
-        public virtual RuleCollection? GetAnalyzer(RuleQuery? query)
-        {
-            return FindRuleCollectionByName(RulesFile.Analyzers, query?.AnalyzerName);
-        }
-
-        public virtual Rule? GetAnalyzerRule(RuleQuery? query)
-        {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
-
-            RuleCollection? analyzer = GetAnalyzer(query);
-            Rule? rule = FindRuleById(query?.RuleId, analyzer?.Rules);
-
-            return rule;
+            return FindRuleCollectionByName(RulesFile.Analyzers, query?.AnalyzerName, true);
         }
 
         public virtual RuleCollection? GetRuleset(RuleQuery? query)
         {
-            return FindRuleCollectionByName(RulesFile.Rulesets, query?.RulesetName);
-        }
-
-        public virtual Rule? GetRulesetRule(RuleQuery? query)
-        {
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
-
-            RuleCollection? ruleset = GetRuleset(query);
-            Rule? rule = FindRuleById(query?.RuleId, ruleset?.Rules);
-
-            return rule;
+            return FindRuleCollectionByName(RulesFile.Rulesets, query?.RulesetName, true);
         }
 
         public virtual Rule? FindRuleById(string? ruleId, List<Rule?>? rules)

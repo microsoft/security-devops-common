@@ -6,7 +6,6 @@
 
 namespace Microsoft.Security.DevOps.Rules
 {
-    using Microsoft.Security.DevOps.Rules;
     using Microsoft.Security.DevOps.Rules.Model;
     using SuperTestBase;
     using System;
@@ -73,98 +72,47 @@ namespace Microsoft.Security.DevOps.Rules
 
         #endregion void Load(string filePath)
 
-        #region T? Read<T>(string filePath)
-
-        private void SetupRead()
-        {
-            SetupCallBase(mock => mock.Read<RulesFile?>(It.IsAny<string>()));
-        }
-
-        [Fact]
-        [Category("Unit")]
-        public void Read()
-        {
-            SetupRead();
-
-            RulesFile? actual = Mocked.Read<RulesFile?>("filePath.fake");
-        }
-
-        #endregion T? Read<T>(string filePath)
-
-        #region IRuleCategoryInfo? GetCategoryInfo(RuleQuery? query)
-
-        private void SetupGetCategoryInfo(
-            out RuleQuery? ruleQuery,
-            out IRuleCategoryInfo? ruleInfo)
-        {
-            SetupCallBase(mock => mock.GetCategoryInfo(It.IsAny<RuleQuery?>()));
-
-            ruleQuery = new RuleQuery();
-            var rule = new Rule();
-            ruleInfo = rule;
-
-            MockObject
-                .Setup(mock => mock.GetRule(It.IsAny<RuleQuery?>()))
-                .Returns(rule);
-        }
-
-        [Fact]
-        [Category("Unit")]
-        public void GetCategoryInfo()
-        {
-            SetupGetCategoryInfo(
-                out RuleQuery? ruleQuery,
-                out IRuleCategoryInfo? ruleInfo);
-
-            IRuleCategoryInfo? actual = Mocked.GetCategoryInfo(ruleQuery);
-
-            IRuleCategoryInfo? expected = new Rule();
-
-            Assert.Equal(expected, actual);
-
-            MockObject.Verify(mock => mock.GetRule(ruleQuery), Times.Once);
-        }
-
-        #endregion IRuleCategoryInfo? GetCategoryInfo(RuleQuery? query)
+        // T? Read<T>(string filePath)
+        // Covered by functional test
 
         #region RuleCategory GetCategoryEnum(RuleQuery? query)
 
         private void SetupGetCategoryEnum(
             out RuleQuery? ruleQuery,
-            out Rule? rule,
-            bool ruleIsNull = false,
+            out QueryResult? result,
+            bool resultIsNull = false,
             RuleCategory ruleCategory = RuleCategory.Custom)
         {
             SetupCallBase(mock => mock.GetCategoryEnum(It.IsAny<RuleQuery?>()));
 
             ruleQuery = new RuleQuery();
-            rule = ruleIsNull ? null : new Rule()
+            result = resultIsNull ? null : new QueryResult(ruleQuery)
             {
                 Category = ruleCategory
             };
 
             MockObject
-                .Setup(mock => mock.GetRule(It.IsAny<RuleQuery?>()))
-                .Returns(rule);
+                .Setup(mock => mock.Query(It.IsAny<RuleQuery?>()))
+                .Returns(result);
         }
 
         [Theory]
         [InlineData(true, RuleCategory.Code, RuleCategory.Undefined)]
         [InlineData(false, RuleCategory.Artifacts, RuleCategory.Artifacts)]
         [Category("Unit")]
-        public void GetCategoryEnum(bool ruleIsNull, RuleCategory category, RuleCategory expected)
+        public void GetCategoryEnum(bool resultIsNull, RuleCategory category, RuleCategory expected)
         {
             SetupGetCategoryEnum(
                 out RuleQuery? ruleQuery,
-                out Rule? rule,
-                ruleIsNull,
+                out QueryResult? result,
+                resultIsNull,
                 category);
 
             RuleCategory actual = Mocked.GetCategoryEnum(ruleQuery);
 
             Assert.Equal(expected, actual);
 
-            MockObject.Verify(mock => mock.GetRule(ruleQuery), Times.Once);
+            MockObject.Verify(mock => mock.Query(ruleQuery), Times.Once);
         }
 
         #endregion RuleCategory GetCategoryEnum(RuleQuery? query)
@@ -173,21 +121,21 @@ namespace Microsoft.Security.DevOps.Rules
 
         private void SetupGetCategoryString(
             out RuleQuery? ruleQuery,
-            out Rule? rule,
-            bool ruleIsNull = false,
+            out QueryResult? result,
+            bool resultIsNull = false,
             string? categoryString = "CategoryString.fake")
         {
             SetupCallBase(mock => mock.GetCategoryString(It.IsAny<RuleQuery?>()));
 
             ruleQuery = new RuleQuery();
-            rule = ruleIsNull ? null : new Rule()
+            result = resultIsNull ? null : new QueryResult(ruleQuery)
             {
                 CategoryString = categoryString
             };
 
             MockObject
-                .Setup(mock => mock.GetRule(It.IsAny<RuleQuery?>()))
-                .Returns(rule);
+                .Setup(mock => mock.Query(It.IsAny<RuleQuery?>()))
+                .Returns(result);
         }
 
         [Theory]
@@ -195,21 +143,41 @@ namespace Microsoft.Security.DevOps.Rules
         [InlineData(false, "CategoryString.fake", "CategoryString.fake")]
         [InlineData(false, null, null)]
         [Category("Unit")]
-        public void GetCategoryString(bool ruleIsNull, string? categoryString, string? expected)
+        public void GetCategoryString(bool resultIsNull, string? categoryString, string? expected)
         {
             SetupGetCategoryString(
                 out RuleQuery? ruleQuery,
-                out Rule? rule,
-                ruleIsNull,
+            out QueryResult? result,
+                resultIsNull,
                 categoryString);
 
             string? actual = Mocked.GetCategoryString(ruleQuery);
 
             Assert.Equal(expected, actual);
 
-            MockObject.Verify(mock => mock.GetRule(ruleQuery), Times.Once);
+            MockObject.Verify(mock => mock.Query(ruleQuery), Times.Once);
         }
 
         #endregion RuleCategory GetCategoryString(RuleQuery? query)
+
+        #region RuleCollection? GetAnalyzer(RuleQuery? query)
+
+        private void SetupGetAnalyzer()
+        {
+            SetupCallBase(mock => mock.GetAnalyzer(It.IsAny<RuleQuery?>()));
+        }
+
+        [Fact]
+        [Trait("Category", "Unit")]
+        public void GetAnalyzer()
+        {
+            RuleQuery? query
+
+            RuleCollection? actual = Mocked.GetAnalyzer();
+
+            Mocked.FindRuleCollectionByName(Mocked.RulesFile.Analyzers, "AnalyzerName.fake", true);
+        }
+
+        #endregion RuleCollection? GetAnalyzer(RuleQuery? query)
     }
 }
