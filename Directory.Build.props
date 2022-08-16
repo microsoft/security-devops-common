@@ -8,7 +8,7 @@
   <PropertyGroup Label="Sideload">
     <!-- Only turn on Sideload when working on a dependent change. -->
     <!-- Otherwise, reference the shipped package. -->
-    <Sideload Condition=" '$(Sideload)' == '' ">true</Sideload>
+    <Sideload Condition=" '$(Sideload)' == '' ">false</Sideload>
   </PropertyGroup>
 
 </Project>
