@@ -108,11 +108,6 @@ namespace Microsoft.Security.DevOps.Rules
         {
             result ??= new QueryResult(query);
 
-            if (query is null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
-
             if (ruleCollection is null)
             {
                 return result;
@@ -120,7 +115,7 @@ namespace Microsoft.Security.DevOps.Rules
 
             result.Rule = FindRuleById(query?.RuleId, ruleCollection?.Rules);
 
-            if (query.Type == QueryType.FindRule && result.Rule != null)
+            if (query?.Type == QueryType.FindRule && result.Rule != null)
             {
                 return result;
             }
@@ -134,25 +129,29 @@ namespace Microsoft.Security.DevOps.Rules
         {
             result ??= new QueryResult(query);
 
-            Rule? rule = null;
-
             if (query.Type != QueryType.FindRule
                 || query.Type != QueryType.FindRule
                 || rulePatterns?.Any() != true)
             {
-                return rule;
+                return result;
             }
 
             foreach (RulePattern? rulePattern in rulePatterns)
             {
-                if (IsMatch(ruleId, rulePattern))
+                if (IsMatch(query.RuleId, rulePattern))
                 {
-                    rule = rulePattern?.Rule;
+                    result.RulePattern = rulePattern;
+                    result.Rule = rulePattern.Rule;
+
+                    if (result.Rule == null)
+                    {
+                        continue;
+                    }
+
+                    result.Rule.Pattern = rulePattern;
                     break;
                 }
             }
-
-            return rule;
 
             return result;
         }
@@ -176,7 +175,7 @@ namespace Microsoft.Security.DevOps.Rules
                 return result.Ruleset;
             }
 
-            return GetRule(query);
+            return null;
         }
 
         public virtual RuleCategory GetCategoryEnum(RuleQuery? query)
@@ -319,7 +318,7 @@ namespace Microsoft.Security.DevOps.Rules
             return rule;
         }
 
-        internal virtual bool IsMatch(string? ruleId, RulePattern? rulePattern)
+        internal virtual bool IsMatch(string? ruleId, [NotNullWhen(true)] RulePattern? rulePattern)
         {
             return !string.IsNullOrWhiteSpace(ruleId) && (rulePattern?.Regex?.IsMatch(ruleId) ?? false);
         }
@@ -354,7 +353,7 @@ namespace Microsoft.Security.DevOps.Rules
             return ruleCollection;
         }
 
-        internal virtual void Validate(RuleQuery? query)
+        internal virtual void Validate([NotNull] RuleQuery? query)
         {
             if (query is null)
             {
