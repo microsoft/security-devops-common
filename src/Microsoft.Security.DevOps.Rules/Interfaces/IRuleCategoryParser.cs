@@ -4,7 +4,7 @@
 //  *                                                       *
 //  ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules.Interfaces
+namespace Microsoft.Security.DevOps.Rules
 {
     using Microsoft.Security.DevOps.Rules.Model;
 

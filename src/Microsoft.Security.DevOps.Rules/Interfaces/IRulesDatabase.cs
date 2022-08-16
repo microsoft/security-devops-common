@@ -4,7 +4,7 @@
 //  *                                                       *
 //  ********************************************************/
 
-namespace Microsoft.Security.DevOps.Rules.Interfaces
+namespace Microsoft.Security.DevOps.Rules
 {
     using Microsoft.Security.DevOps.Rules.Model;
 
@@ -14,7 +14,7 @@ namespace Microsoft.Security.DevOps.Rules.Interfaces
         void Load(string filePath);
 
         IRuleCategoryInfo? GetCategoryInfo(RuleQuery? query);
-        RuleCategory? GetCategoryEnum(RuleQuery? query);
+        RuleCategory GetCategoryEnum(RuleQuery? query);
         string? GetCategoryString(RuleQuery? query);
 
         Rule? GetRule(RuleQuery? query);

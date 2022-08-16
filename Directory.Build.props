@@ -1,8 +1,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <RepoDirectory Condition = " '$(RepoDirectory)' != '' ">$(MSBuildThisFileDirectory)</RepoDirectory>
-    <ReposDirectory Condition = " '$(ReposDirectory)' != '' ">$(RepoDirectory)/..</ReposDirectory>
+    <RepoDirectory Condition = " '$(RepoDirectory)' == '' ">$(MSBuildThisFileDirectory)</RepoDirectory>
+    <ReposDirectory Condition = " '$(ReposDirectory)' == '' ">$(RepoDirectory)/..</ReposDirectory>
   </PropertyGroup>
 
   <PropertyGroup Label="Sideload">

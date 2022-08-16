@@ -1,4 +1,4 @@
 {
-  "ProjectFile": "TestBase.sln",
-  "SolutionFile": "TestBase.Sideload.sln"
+  "ProjectFile": "src/Microsoft.Security.DevOps.Rules.sln",
+  "SolutionFile": "src/Microsoft.Security.DevOps.Rules.Sideload.sln"
 }

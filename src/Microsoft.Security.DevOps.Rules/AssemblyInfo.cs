@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Microsoft.Security.DevOps.Tests")]
+[assembly: InternalsVisibleTo("Microsoft.Security.DevOps.Rules.Tests")]
 // moq framework
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 #endif

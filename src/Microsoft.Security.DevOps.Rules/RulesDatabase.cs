@@ -6,7 +6,6 @@
 
 namespace Microsoft.Security.DevOps.Rules
 {
-    using Microsoft.Security.DevOps.Rules.Interfaces;
     using Microsoft.Security.DevOps.Rules.Model;
     using Newtonsoft.Json;
     using System.Diagnostics.CodeAnalysis;
@@ -33,15 +32,15 @@ namespace Microsoft.Security.DevOps.Rules
         }
 
         [MemberNotNull(nameof(rulesFile))]
-        public void Load()
+        public virtual void Load()
         {
-            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "rules.json");
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "microsoft.json");
             Load(filePath);
         }
 
-        public void Load(string filePath)
+        public virtual void Load(string filePath)
         {
-            rulesFile = Read<RulesFile>(filePath);
+            rulesFile = Read<RulesFile?>(filePath);
         }
 
         internal virtual T? Read<T>(string filePath)
@@ -52,33 +51,24 @@ namespace Microsoft.Security.DevOps.Rules
 
         public virtual IRuleCategoryInfo? GetCategoryInfo(RuleQuery? query)
         {
-            IRuleCategoryInfo? rule = GetRule(query);
-            return rule;
+            return GetRule(query);
         }
 
-        public virtual RuleCategory? GetCategoryEnum(RuleQuery? query)
+        public virtual RuleCategory GetCategoryEnum(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = GetCategoryInfo(query);
+            IRuleCategoryInfo? info = GetRule(query);
             return info?.Category ?? RuleCategory.Undefined;
         }
 
         public virtual string? GetCategoryString(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = GetCategoryInfo(query);
+            IRuleCategoryInfo? info = GetRule(query);
             return info?.CategoryString;
         }
 
         public virtual Rule? GetRule(RuleQuery? query)
         {
-            if (query == null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
-
-            if (string.IsNullOrWhiteSpace(query.RuleId) && string.IsNullOrWhiteSpace(query.RulePattern))
-            {
-                throw new RuleQueryInsufficientArgumentsException(query);
-            }
+            Validate(query);
 
             Rule? rule = null;
 
@@ -221,6 +211,22 @@ namespace Microsoft.Security.DevOps.Rules
             }
 
             return ruleCollection;
+        }
+
+        internal virtual void Validate(RuleQuery? query)
+        {
+            if (query == null)
+            {
+                throw new ArgumentNullException(nameof(query));
+            }
+
+            if (string.IsNullOrWhiteSpace(query.RuleId)
+                && string.IsNullOrWhiteSpace(query.AnalyzerName)
+                && string.IsNullOrWhiteSpace(query.RulesetName)
+                && string.IsNullOrWhiteSpace(query.RulePattern))
+            {
+                throw new RuleQueryInsufficientArgumentsException(query);
+            }
         }
     }
 }

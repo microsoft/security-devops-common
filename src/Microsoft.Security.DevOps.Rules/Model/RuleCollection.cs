@@ -6,7 +6,6 @@
 
 namespace Microsoft.Security.DevOps.Rules.Model
 {
-    using Microsoft.Security.DevOps.Rules.Interfaces;
     using System;
     using System.Collections.Generic;
     using System.Runtime.Serialization;
