@@ -13,18 +13,22 @@ namespace Microsoft.Security.DevOps.Rules
     {
         private RulesDatabase RulesDatabase = new RulesDatabase();
 
-        [Fact]
+        [Theory]
+        [InlineData("template-analyzer", null, RuleCategory.IaC)]
+        [InlineData("template-analyzer", "ruleId.fake", RuleCategory.IaC)]
+        [InlineData("TemplateAnalyzer", null, RuleCategory.IaC)]
+        [InlineData("credscan", null, RuleCategory.Secrets)]
+        [InlineData("credscan", "ruleId.fake", RuleCategory.Secrets)]
         [Trait("Category", "Functional")]
-        public void GetTemplateAnalyzerCategory()
+        public void GetTemplateAnalyzerCategory(string analyzerName, string ruleId, RuleCategory expected)
         {
             var ruleQuery = new RuleQuery()
             {
-                AnalyzerName = "template-analyzer",
-                RuleId = "CA2000"
+                AnalyzerName = analyzerName,
+                RuleId = ruleId // Non existant
             };
 
             RuleCategory actual = RulesDatabase.GetCategoryEnum(ruleQuery);
-            RuleCategory expected = RuleCategory.IaC;
 
             Assert.Equal(expected, actual);
         }
