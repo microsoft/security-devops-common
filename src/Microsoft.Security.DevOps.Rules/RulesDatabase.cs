@@ -158,38 +158,20 @@ namespace Microsoft.Security.DevOps.Rules
 
         public virtual IRuleCategoryInfo? GetCategoryInfo(RuleQuery? query)
         {
-            QueryResult result = Query(query);
-
-            if (result.Rule != null)
-            {
-                return result.Rule;
-            }
-
-            if (result.Analyzer != null)
-            {
-                return result.Analyzer;
-            }
-
-            if (result.Ruleset != null)
-            {
-                return result.Ruleset;
-            }
-
-            return null;
+            return Query(query);
         }
 
         public virtual RuleCategory GetCategoryEnum(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = GetCategoryInfo(query);
+            IRuleCategoryInfo? info = Query(query);
             return info?.Category ?? RuleCategory.Undefined;
         }
 
         public virtual string? GetCategoryString(RuleQuery? query)
         {
-            IRuleCategoryInfo? info = GetCategoryInfo(query);
+            IRuleCategoryInfo? info = Query(query);
             return info?.CategoryString;
         }
-
 
         public virtual Rule? GetRule(RuleQuery? query)
         {

@@ -25,10 +25,10 @@ namespace Microsoft.Security.DevOps.Rules.Model
         [DataMember(Name = "rulePatterns", EmitDefaultValue = false, Order = 110)]
         public List<RulePattern?>? RulePatterns { get; set; }
 
-        private string? categoryString;
+        protected internal string? categoryString;
 
         [DataMember(Name = "category", Order = 150)]
-        public string? CategoryString
+        public virtual string? CategoryString
         {
             get
             {
@@ -41,8 +41,8 @@ namespace Microsoft.Security.DevOps.Rules.Model
             }
         }
 
-        private RuleCategory category = RuleCategory.Undefined;
-        public RuleCategory Category
+        protected internal RuleCategory category = RuleCategory.Undefined;
+        public virtual RuleCategory Category
         {
             get
             {

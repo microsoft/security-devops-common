@@ -6,6 +6,7 @@
 
 namespace Microsoft.Security.DevOps.Rules
 {
+    using Microsoft.CodeAnalysis.Sarif;
     using Microsoft.Security.DevOps.Rules.Model;
     using System;
     using System.Linq;
@@ -43,6 +44,47 @@ namespace Microsoft.Security.DevOps.Rules
             internal set
             {
                 success = value;
+            }
+        }
+
+        public override string? CategoryString
+        {
+            get
+            {
+                if (Rule is not null && Rule.Category != RuleCategory.Undefined)
+                {
+                    base.CategoryString = Rule.CategoryString;
+                }
+                else if (Analyzer is not null && Analyzer.Category != RuleCategory.Undefined)
+                {
+                    base.CategoryString = Analyzer.CategoryString;
+                }
+                else if (Ruleset is not null && Ruleset.Category != RuleCategory.Undefined)
+                {
+                    base.CategoryString = Ruleset.CategoryString;
+                }
+
+                return base.CategoryString;
+            }
+            set
+            {
+                base.CategoryString = value;
+            }
+        }
+
+        public override RuleCategory Category
+        {
+            get
+            {
+                if (base.CategoryString is null)
+                {
+                    categoryString = CategoryString;
+                }
+                return base.Category;
+            }
+            set
+            {
+                base.Category = value;
             }
         }
 
