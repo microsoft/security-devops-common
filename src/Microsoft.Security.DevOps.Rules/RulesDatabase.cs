@@ -9,6 +9,7 @@ namespace Microsoft.Security.DevOps.Rules
     using Microsoft.Security.DevOps.Rules.Model;
     using Newtonsoft.Json;
     using System.Diagnostics.CodeAnalysis;
+    using System.Reflection;
 
     public class RulesDatabase : IRulesDatabase
     {
@@ -34,7 +35,15 @@ namespace Microsoft.Security.DevOps.Rules
         [MemberNotNull(nameof(rulesFile))]
         public virtual void Load()
         {
-            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "microsoft.json");
+            string? directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            if (directory is null)
+            {
+                throw new RuleDatabaseLoadException();
+            }
+
+            string filePath = Path.Combine(directory, "microsoft.json");
+
             Load(filePath);
         }
 

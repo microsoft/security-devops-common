@@ -30,7 +30,7 @@ namespace Microsoft.Security.DevOps.Rules
         #region RulesFile:get
 
         [Fact]
-        [Category("Unit")]
+        [Trait("Category", "Unit")]
         public void RulesFile_get()
         {
             SetupCallBase(mock => mock.RulesFile);
@@ -49,7 +49,7 @@ namespace Microsoft.Security.DevOps.Rules
         #region void Load()
 
         [Fact]
-        [Category("Unit")]
+        [Trait("Category", "Unit")]
         public void Load()
         {
             SetupCallBase(mock => mock.Load());
@@ -65,7 +65,7 @@ namespace Microsoft.Security.DevOps.Rules
         #region void Load(string filePath)
 
         [Fact]
-        [Category("Unit")]
+        [Trait("Category", "Unit")]
         public void Load_FilePath()
         {
             SetupCallBase(mock => mock.Load(It.IsAny<string>()));
@@ -198,7 +198,7 @@ namespace Microsoft.Security.DevOps.Rules
         [Theory]
         [InlineData(true, RuleCategory.Code, RuleCategory.Undefined)]
         [InlineData(false, RuleCategory.Artifacts, RuleCategory.Artifacts)]
-        [Category("Unit")]
+        [Trait("Category", "Unit")]
         public void GetCategoryEnum(bool resultIsNull, RuleCategory category, RuleCategory expected)
         {
             SetupGetCategoryEnum(
@@ -241,7 +241,7 @@ namespace Microsoft.Security.DevOps.Rules
         [InlineData(true, "CategoryString.fake", null)]
         [InlineData(false, "CategoryString.fake", "CategoryString.fake")]
         [InlineData(false, null, null)]
-        [Category("Unit")]
+        [Trait("Category", "Unit")]
         public void GetCategoryString(bool resultIsNull, string? categoryString, string? expected)
         {
             SetupGetCategoryString(
