@@ -56,8 +56,7 @@ namespace Microsoft.Security.DevOps.Rules
 
             Mocked.Load();
 
-            string expected = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "microsoft.json"); ;
-            MockObject.Verify(mock => mock.Load(expected), Times.Once);
+            MockObject.Verify(mock => mock.Load("microsoft.json"), Times.Once);
         }
 
         #endregion void Load()
