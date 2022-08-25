@@ -35,7 +35,14 @@ namespace Microsoft.Security.DevOps.Rules
         [MemberNotNull(nameof(rulesFile))]
         public virtual void Load()
         {
-            string? directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var thisAssembly = Assembly.GetAssembly(typeof(RuleDatabaseLoadException));
+
+            if (thisAssembly is null)
+            {
+                throw new RuleDatabaseLoadException();
+            }
+
+            string? directory = Path.GetDirectoryName(thisAssembly.Location);
 
             if (directory is null)
             {
