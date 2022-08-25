@@ -35,23 +35,23 @@ namespace Microsoft.Security.DevOps.Rules
         [MemberNotNull(nameof(rulesFile))]
         public virtual void Load()
         {
-            var thisAssembly = Assembly.GetAssembly(typeof(RuleDatabaseLoadException));
+            //var thisAssembly = Assembly.GetAssembly(typeof(RulesDatabase));
 
-            if (thisAssembly is null)
-            {
-                throw new RuleDatabaseLoadException();
-            }
+            //if (thisAssembly is null)
+            //{
+            //    throw new RuleDatabaseLoadException();
+            //}
 
-            string? directory = Path.GetDirectoryName(thisAssembly.Location);
+            //string? directory = Path.GetDirectoryName(thisAssembly.Location);
 
-            if (directory is null)
-            {
-                throw new RuleDatabaseLoadException();
-            }
+            //if (directory is null)
+            //{
+            //    throw new RuleDatabaseLoadException();
+            //}
 
-            string filePath = Path.Combine(directory, "microsoft.json");
+            //string filePath = Path.Combine(directory, "microsoft.json");
 
-            Load(filePath);
+            Load("microsoft.json");
         }
 
         public virtual void Load(string filePath)
