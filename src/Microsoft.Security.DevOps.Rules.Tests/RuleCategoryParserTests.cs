@@ -42,6 +42,7 @@ namespace Microsoft.Security.DevOps.Rules
         [InlineData("containers", RuleCategory.Containers)]
         [InlineData("Container", RuleCategory.Containers)]
         [InlineData("container", RuleCategory.Containers)]
+        [Trait("Category", "Unit")]
         public void Parse(string? categoryString, RuleCategory expected)
         {
             RuleCategory actual = RuleCategoryParser.Instance.Parse(categoryString);
