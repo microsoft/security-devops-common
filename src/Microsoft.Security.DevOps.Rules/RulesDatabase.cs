@@ -9,10 +9,11 @@ namespace Microsoft.Security.DevOps.Rules
     using Microsoft.Security.DevOps.Rules.Model;
     using Newtonsoft.Json;
     using System.Diagnostics.CodeAnalysis;
-    using System.Reflection;
 
     public class RulesDatabase : IRulesDatabase
     {
+        private EmbeddedResourceReader EmbeddedResourceReader;
+
         private RulesFile? rulesFile;
         public virtual RulesFile RulesFile
         {
@@ -29,29 +30,18 @@ namespace Microsoft.Security.DevOps.Rules
 
         public RulesDatabase()
         {
-
+            EmbeddedResourceReader = new EmbeddedResourceReader();
         }
 
         [MemberNotNull(nameof(rulesFile))]
         public virtual void Load()
         {
-            //var thisAssembly = Assembly.GetAssembly(typeof(RulesDatabase));
+            rulesFile = EmbeddedResourceReader.Read<RulesFile>("Microsoft.Security.DevOps.Rules.microsoft.json");
 
-            //if (thisAssembly is null)
-            //{
-            //    throw new RuleDatabaseLoadException();
-            //}
-
-            //string? directory = Path.GetDirectoryName(thisAssembly.Location);
-
-            //if (directory is null)
-            //{
-            //    throw new RuleDatabaseLoadException();
-            //}
-
-            //string filePath = Path.Combine(directory, "microsoft.json");
-
-            Load("microsoft.json");
+            if (rulesFile == null)
+            {
+                rulesFile = new RulesFile();
+            }
         }
 
         public virtual void Load(string filePath)

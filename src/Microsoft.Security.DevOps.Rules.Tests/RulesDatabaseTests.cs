@@ -55,8 +55,6 @@ namespace Microsoft.Security.DevOps.Rules
             SetupCallBase(mock => mock.Load());
 
             Mocked.Load();
-
-            MockObject.Verify(mock => mock.Load("microsoft.json"), Times.Once);
         }
 
         #endregion void Load()

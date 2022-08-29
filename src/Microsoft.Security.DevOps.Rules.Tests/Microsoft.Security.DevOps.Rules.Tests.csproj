@@ -9,11 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(Sideload)' != 'true' ">
-    <PackageReference Include="SuperTestBase" Version="1.0.0" />
+    <PackageReference Include="SuperTestBase.xUnit" Version="1.0.0" />
 	</ItemGroup>
 	
   <ItemGroup Condition=" '$(Sideload)' == 'true' ">
-		<ProjectReference Include="$(ReposDirectory)/supertestbase/SuperTestBase/SuperTestBase.csproj" />
+		<ProjectReference Include="$(ReposDirectory)/supertestbase/src/SuperTestBase.xUnit/SuperTestBase.xUnit.csproj" />
   </ItemGroup>
 
   <ItemGroup>

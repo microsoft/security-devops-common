@@ -61,11 +61,29 @@ namespace Microsoft.Security.DevOps.Rules {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to read the embedded resource: {0}.
+        /// </summary>
+        internal static string EmbeddedResourceReadException {
+            get {
+                return ResourceManager.GetString("EmbeddedResourceReadException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to determine the directory to load the rules database from..
         /// </summary>
         internal static string RulesDatabaseLoadException {
             get {
                 return ResourceManager.GetString("RulesDatabaseLoadException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown.
+        /// </summary>
+        internal static string Unknown {
+            get {
+                return ResourceManager.GetString("Unknown", resourceCulture);
             }
         }
     }
