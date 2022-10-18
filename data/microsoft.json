@@ -18,7 +18,8 @@
         "Template Analyzer",
         "BPA",
         "Best Practice Analyzer",
-        "Template BPA"
+        "Template BPA",
+        "Template Best Practice Analyzer"
       ],
       "category": "IaC"
     },
