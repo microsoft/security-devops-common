@@ -51,10 +51,10 @@ jobs:
         dotnet-version: '6.0'
 
     - name: Restore dependencies
-      run: dotnet restore ./src/Microsoft.Security.DevOps.Rules.sln
+      run: dotnet restore ./src/Microsoft.Security.DevOps.Rules/Microsoft.Security.DevOps.Rules.csproj
 
     - name: Build project
-      run: dotnet build ./src/Microsoft.Security.DevOps.Rules.sln
+      run: dotnet build ./src/Microsoft.Security.DevOps.Rules/Microsoft.Security.DevOps.Rules.csproj
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
