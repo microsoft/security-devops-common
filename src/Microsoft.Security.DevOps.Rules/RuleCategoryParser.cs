@@ -55,6 +55,7 @@ namespace Microsoft.Security.DevOps.Rules
                         { "Infrastructure-As-Code", RuleCategory.IaC },
                         { "Infrastructure As Code", RuleCategory.IaC },
                         { "Container", RuleCategory.Containers },
+                        { "APIs", RuleCategory.APIs }
                     };
                 }
 
