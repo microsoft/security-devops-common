@@ -5,11 +5,19 @@
   "version": "0.1.0",
   "analyzers": [
     {
+      "name": "ADOScanner",
+      "category": "Hardening"
+    },
+    {
       "name": "credscan",
       "alternativeNames": [
         "Credential Scanner"
       ],
       "category": "Secrets"
+    },
+    {
+      "name": "GitHubScanner",
+      "category": "Hardening"
     },
     {
       "name": "templateanalyzer",

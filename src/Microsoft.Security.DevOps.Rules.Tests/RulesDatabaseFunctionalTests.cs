@@ -23,6 +23,10 @@ namespace Microsoft.Security.DevOps.Rules
         [InlineData("terrascan", "ruleId.fake", RuleCategory.IaC)]
         [InlineData("apis", null, RuleCategory.APIs)]
         [InlineData("apis", "ruleId.fake", RuleCategory.APIs)]
+        [InlineData("ADOScanner", null, RuleCategory.Hardening)]
+        [InlineData("adoscanner", "ruleId.fake", RuleCategory.Hardening)]
+        [InlineData("GitHubScanner", null, RuleCategory.Hardening)]
+        [InlineData("githubscanner", "ruleId.fake", RuleCategory.Hardening)]
         [Trait("Category", "Functional")]
         public void GetTemplateAnalyzerCategory(string analyzerName, string ruleId, RuleCategory expected)
         {
