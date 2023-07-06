@@ -44,6 +44,8 @@ namespace Microsoft.Security.DevOps.Rules
         [InlineData("container", RuleCategory.Containers)]
         [InlineData("APIs", RuleCategory.APIs)]
         [InlineData("apis", RuleCategory.APIs)]
+        [InlineData("Hardening", RuleCategory.Hardening)]
+        [InlineData("hardening", RuleCategory.Hardening)]
         [Trait("Category", "Unit")]
         public void Parse(string? categoryString, RuleCategory expected)
         {
