@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/security-devops-policy/$schemata/schema-0.1.0.json",
   "title": "Microsoft",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "analyzers": [
     {
       "name": "ADOScanner",
@@ -34,6 +34,10 @@
     {
       "name": "terrascan",
       "category": "IaC"
+    },
+    {
+      "name": "42Crunch REST API Static Security Testing",
+      "category": "APIs"
     }
   ]
 }

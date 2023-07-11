@@ -21,8 +21,8 @@ namespace Microsoft.Security.DevOps.Rules
         [InlineData("template-analyzer", null, RuleCategory.IaC)] // alternative name
         [InlineData("terrascan", null, RuleCategory.IaC)]
         [InlineData("terrascan", "ruleId.fake", RuleCategory.IaC)]
-        //[InlineData("apis", null, RuleCategory.APIs)]
-        //[InlineData("apis", "ruleId.fake", RuleCategory.APIs)]
+        [InlineData("42Crunch REST API Static Security Testing", null, RuleCategory.APIs)]
+        [InlineData("42Crunch REST API Static Security Testing", "ruleId.fake", RuleCategory.APIs)]
         [InlineData("ADOScanner", null, RuleCategory.Hardening)]
         [InlineData("adoscanner", "ruleId.fake", RuleCategory.Hardening)]
         [InlineData("GitHubScanner", null, RuleCategory.Hardening)]
