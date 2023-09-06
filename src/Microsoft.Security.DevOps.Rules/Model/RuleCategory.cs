@@ -38,6 +38,8 @@ namespace Microsoft.Security.DevOps.Rules.Model
         Dependencies = 4,
         Secrets = 5,
         IaC = 6,
-        Containers = 7
+        Containers = 7,
+        APIs = 8,
+        Hardening = 9
     }
 }

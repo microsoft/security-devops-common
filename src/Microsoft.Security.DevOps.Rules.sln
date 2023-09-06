@@ -24,6 +24,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{EB847C03
 		..\SUPPORT.md = ..\SUPPORT.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{79E8F145-0F45-4AB2-B3E7-6F2AEF5A6A06}"
+	ProjectSection(SolutionItems) = preProject
+		..\data\microsoft.json = ..\data\microsoft.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
