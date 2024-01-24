@@ -42,5 +42,12 @@
       ],
       "category": "APIs"
     }
+    {
+      "name": "HawkScan",
+      "alternativeNames": [
+        "StackHawk"
+      ],
+      "category": "APIs"
+    }
   ]
 }
