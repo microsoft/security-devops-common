@@ -48,6 +48,10 @@
         "StackHawk"
       ],
       "category": "APIs"
+    },
+    {
+      "name": "NeuraLegion",
+      "category": "APIs"
     }
   ]
 }
