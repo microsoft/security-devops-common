@@ -36,6 +36,10 @@
       "category": "IaC"
     },
     {
+      "name": "checkov",
+      "category": "IaC"
+    },
+    {
       "name": "42Crunch REST API Static Security Testing",
       "alternativeNames": [
         "42Crunch API Conformance Scan"
