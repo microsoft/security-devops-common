@@ -1,0 +1,30 @@
+{
+  "name": "mdc-plugins",
+  "owner": {
+    "name": "Microsoft Defender for Cloud"
+  },
+  "metadata": {
+    "description": "Microsoft Defender for Cloud plugins for GitHub Copilot CLI — runtime-aware security skills, scanning, and secure code generation.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "mdc-security-skills",
+      "description": "MDC runtime-aware security skills. Reactive scanning capped at 5 findings, plus preventive secure code generation grounded in live deployment context (internet exposure, attack paths, PII handling).",
+      "version": "0.1.0",
+      "source": "plugin/mdc-security-skills",
+      "author": {
+        "name": "Microsoft Defender for Cloud"
+      },
+      "keywords": [
+        "security",
+        "defender",
+        "mdc",
+        "scanning",
+        "sarif",
+        "devsecops",
+        "runtime-context"
+      ]
+    }
+  ]
+}

@@ -1,14 +1,35 @@
-# Microsoft Security DevOps Rules
+# Microsoft Security DevOps
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+Common infrastructure, schemata, and plugin marketplace for Microsoft Security DevOps tooling.
 
-As the maintainer of this project, please make a few updates:
+## Plugin Marketplace
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+This repository hosts the **plugin marketplace** for [GitHub Copilot CLI](https://github.com/github/copilot-cli) security plugins provided by Microsoft Defender for Cloud.
+
+### Available Plugins
+
+| Plugin | Description |
+|--------|-------------|
+| [`mdc-security-skills`](./plugin/mdc-security-skills/) | MDC runtime-aware security skills — reactive scanning (capped at 5 findings) plus preventive secure code generation grounded in live deployment context. |
+
+See [`marketplace.json`](./marketplace.json) for the machine-readable plugin registry.
+
+### Quick Start
+
+```bash
+# 1. Register this marketplace (one-time)
+copilot plugin marketplace add microsoft/security-devops-common
+
+# 2. Install a plugin
+copilot plugin install mdc-security-skills@mdc-plugins
+
+# 3. Verify
+copilot plugin list
+```
+
+### Plugin Development
+
+Plugins live under [`plugin/`](./plugin/). Each plugin directory contains a `plugin.json` manifest and a `skills/` folder with one or more skill definitions. See the [mdc-security-skills README](./plugin/mdc-security-skills/README.md) for an example.
 
 ## Contributing
 

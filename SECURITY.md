@@ -38,4 +38,8 @@ We prefer all communications to be in English.
 
 Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://aka.ms/opensource/security/cvd).
 
+## Plugin Marketplace Security
+
+Plugins published in this repository's marketplace are maintained by Microsoft and follow the same security policies described above. If you discover a security vulnerability in any plugin, skill definition, or the marketplace manifest (`marketplace.json`), please report it through the MSRC process above — do **not** open a public GitHub issue.
+
 <!-- END MICROSOFT SECURITY.MD BLOCK -->
