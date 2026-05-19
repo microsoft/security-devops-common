@@ -4,13 +4,13 @@ Common infrastructure, schemata, and plugin marketplace for Microsoft Security D
 
 ## Plugin Marketplace
 
-This repository hosts the **plugin marketplace** for [GitHub Copilot CLI](https://github.com/github/copilot-cli) security plugins provided by Microsoft Defender for Cloud.
+This repository hosts the **plugin marketplace** for [GitHub Copilot CLI](https://github.com/github/copilot-cli) security plugins provided by ASPM.
 
 ### Available Plugins
 
 | Plugin | Description |
 |--------|-------------|
-| [`mdc-security-skills`](./plugin/mdc-security-skills/) | MDC runtime-aware security skills — reactive scanning (capped at 5 findings) plus preventive secure code generation grounded in live deployment context. |
+| [`aspm-security-skills`](./plugin/aspm-security-skills/) | ASPM runtime-aware security skills — reactive scanning (capped at 5 findings) plus preventive secure code generation grounded in live deployment context. |
 
 See [`marketplace.json`](./marketplace.json) for the machine-readable plugin registry.
 
@@ -21,7 +21,7 @@ See [`marketplace.json`](./marketplace.json) for the machine-readable plugin reg
 copilot plugin marketplace add microsoft/security-devops-common
 
 # 2. Install a plugin
-copilot plugin install mdc-security-skills@mdc-plugins
+copilot plugin install aspm-security-skills@aspm-plugins
 
 # 3. Verify
 copilot plugin list
@@ -29,7 +29,7 @@ copilot plugin list
 
 ### Plugin Development
 
-Plugins live under [`plugin/`](./plugin/). Each plugin directory contains a `plugin.json` manifest and a `skills/` folder with one or more skill definitions. See the [mdc-security-skills README](./plugin/mdc-security-skills/README.md) for an example.
+Plugins live under [`plugin/`](./plugin/). Each plugin directory contains a `plugin.json` manifest and a `skills/` folder with one or more skill definitions. See the [aspm-security-skills README](./plugin/aspm-security-skills/README.md) for an example.
 
 ## Contributing
 

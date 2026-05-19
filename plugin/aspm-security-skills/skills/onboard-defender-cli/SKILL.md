@@ -1,18 +1,18 @@
 ---
 name: onboard-defender-cli
 description: |
-  Install and verify the Microsoft Defender for Cloud CLI (`defender`) on the local machine.
-  Downloads the standalone binary to `~/.mdc/`, verifies the install script's Authenticode
+  Install and verify the ASPM CLI (`defender`) on the local machine.
+  Downloads the standalone binary to `~/.aspm/`, verifies the install script's Authenticode
   signature on Windows, and adds the binary to PATH. Use when the `defender` command is missing
   or out of date, or when a user explicitly asks to install/onboard/set up the Defender CLI.
   Triggers: "install defender cli", "onboard defender cli", "set up defender cli",
-  "defender not found", "defender: command not found", "install mdc cli", "download defender cli",
+  "defender not found", "defender: command not found", "install aspm cli", "download defender cli",
   "InstallCli.ps1", "get defender cli".
 ---
 
 # Defender CLI — Onboarding & Installation
 
-Install the Microsoft Defender for Cloud CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
+Install the ASPM CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.aspm/`.
 
 ## When to Use
 
@@ -89,9 +89,9 @@ The script handles:
 
 - OS detection (Windows, Linux, macOS)
 - Architecture detection (x64, ARM64, x86)
-- Downloading the binary to `~/.mdc/`
+- Downloading the binary to `~/.aspm/`
 - Setting executable permissions on Linux/macOS
-- Adding `~/.mdc/` to PATH (current session + persistent)
+- Adding `~/.aspm/` to PATH (current session + persistent)
 
 ## Step 3: Verify
 
@@ -124,5 +124,5 @@ Once `defender --version` succeeds and `defender agent --install` has run, retur
 | `Invoke-RestMethod` download fails | Check network connectivity; verify the download URL is reachable |
 | Authenticode signature `NotSigned` / `HashMismatch` | Do NOT run the script. Report failure to the user. Re-download and re-verify |
 | `& $scriptPath` fails with `$BaseUrl` validation error | Ensure `$BaseUrl = "cli.dfd.security.stage.azure-test.net"` is set in the same scope before invocation |
-| PATH not picked up | Restart the terminal session, or `$env:PATH += ";$HOME\.mdc"` for the current session |
-| Linux/macOS — `defender: permission denied` | `chmod +x ~/.mdc/defender` |
+| PATH not picked up | Restart the terminal session, or `$env:PATH += ";$HOME\.aspm"` for the current session |
+| Linux/macOS — `defender: permission denied` | `chmod +x ~/.aspm/defender` |
