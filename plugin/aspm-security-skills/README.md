@@ -22,7 +22,7 @@ copilot plugin list
 
 | Skill | What it does |
 |-------|--------------|
-| [`onboard-defender-cli`](./skills/onboard-defender-cli/SKILL.md) | Installs the `defender` CLI binary, then installs the remaining ASPM skills (`run-security-scan`, `fix-security-issues`) by running `defender agent --install`. |
+| [`onboard-defender-cli`](./skills/onboard-defender-cli/SKILL.md) | Installs the Defender for Cloud CLI (`defender`) binary, then installs the remaining ASPM skills (`run-security-scan`, `fix-security-issues`) by running `defender agent --install`. |
 
 ## Try it
 

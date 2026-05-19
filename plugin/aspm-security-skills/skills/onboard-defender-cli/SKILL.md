@@ -1,24 +1,29 @@
 ---
 name: onboard-defender-cli
 description: |
-  Install and verify the ASPM CLI (`defender`) on the local machine.
+  Install and verify the Defender for Cloud CLI (`defender`) on the local machine.
   Downloads the standalone binary to `~/.aspm/`, verifies the install script's Authenticode
   signature on Windows, and adds the binary to PATH. Use when the `defender` command is missing
-  or out of date, or when a user explicitly asks to install/onboard/set up the Defender CLI.
+  or out of date, or when a user explicitly asks to install/onboard/set up the Defender for Cloud CLI.
   Triggers: "install defender cli", "onboard defender cli", "set up defender cli",
   "defender not found", "defender: command not found", "install aspm cli", "download defender cli",
   "InstallCli.ps1", "get defender cli".
 ---
 
-# Defender CLI — Onboarding & Installation
+# Defender for Cloud CLI — Onboarding & Installation
 
-Install the ASPM CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.aspm/`.
+Install the Defender for Cloud CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.aspm/`.
+
+For official documentation, see:
+
+- [Defender for Cloud CLI overview](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-overview)
+- [Install the Defender for Cloud CLI](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install)
 
 ## When to Use
 
 - The `defender` command is not on PATH
 - A scan skill (e.g., `run-security-scan`) reports the CLI is missing
-- The user explicitly asks to install, onboard, set up, or download the Defender CLI
+- The user explicitly asks to install, onboard, set up, or download the Defender for Cloud CLI
 
 ## Prerequisites
 
