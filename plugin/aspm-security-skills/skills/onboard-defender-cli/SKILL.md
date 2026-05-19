@@ -36,7 +36,7 @@ If the command succeeds, the CLI is already installed. Done — return to the ca
 
 ```powershell
 $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "InstallCli.ps1"
-Invoke-RestMethod -Uri "https://cli.dfd.security.stage.azure-test.net/public/v2/latest/InstallCli.ps1" -OutFile $scriptPath
+Invoke-RestMethod -Uri "https://cli.dfd.security.azure.com/public/latest/InstallCli.ps1" -OutFile $scriptPath
 ```
 
 ## Step 2b: Verify the script signature
@@ -74,14 +74,14 @@ Set it in the calling scope so the validation passes:
 
 ```powershell
 # Set BaseUrl to satisfy the script's internal validation check
-$BaseUrl = "cli.dfd.security.stage.azure-test.net"
+$BaseUrl = "cli.dfd.security.azure.com"
 & $scriptPath
 ```
 
 To install a specific version instead of latest:
 
 ```powershell
-$BaseUrl = "cli.dfd.security.stage.azure-test.net"
+$BaseUrl = "cli.dfd.security.azure.com"
 & $scriptPath -CliVersion "3.0.12345"
 ```
 
@@ -123,6 +123,6 @@ Once `defender --version` succeeds and `defender agent --install` has run, retur
 |-------|------------|
 | `Invoke-RestMethod` download fails | Check network connectivity; verify the download URL is reachable |
 | Authenticode signature `NotSigned` / `HashMismatch` | Do NOT run the script. Report failure to the user. Re-download and re-verify |
-| `& $scriptPath` fails with `$BaseUrl` validation error | Ensure `$BaseUrl = "cli.dfd.security.stage.azure-test.net"` is set in the same scope before invocation |
+| `& $scriptPath` fails with `$BaseUrl` validation error | Ensure `$BaseUrl = "cli.dfd.security.azure.com"` is set in the same scope before invocation |
 | PATH not picked up | Restart the terminal session, or `$env:PATH += ";$HOME\.aspm"` for the current session |
 | Linux/macOS — `defender: permission denied` | `chmod +x ~/.aspm/defender` |
