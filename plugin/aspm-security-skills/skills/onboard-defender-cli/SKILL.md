@@ -2,7 +2,7 @@
 name: onboard-defender-cli
 description: |
   Install and verify the Defender for Cloud CLI (`defender`) on the local machine.
-  Downloads the standalone binary to `~/.aspm/`, verifies the install script's Authenticode
+  Downloads the standalone binary to `~/.mdc/`, verifies the install script's Authenticode
   signature on Windows, and adds the binary to PATH. Use when the `defender` command is missing
   or out of date, or when a user explicitly asks to install/onboard/set up the Defender for Cloud CLI.
   Triggers: "install defender cli", "onboard defender cli", "set up defender cli",
@@ -12,7 +12,7 @@ description: |
 
 # Defender for Cloud CLI — Onboarding & Installation
 
-Install the Defender for Cloud CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.aspm/`.
+Install the Defender for Cloud CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
 
 For official documentation, see:
 
@@ -94,9 +94,9 @@ The script handles:
 
 - OS detection (Windows, Linux, macOS)
 - Architecture detection (x64, ARM64, x86)
-- Downloading the binary to `~/.aspm/`
+- Downloading the binary to `~/.mdc/`
 - Setting executable permissions on Linux/macOS
-- Adding `~/.aspm/` to PATH (current session + persistent)
+- Adding `~/.mdc/` to PATH (current session + persistent)
 
 ## Step 3: Verify
 
@@ -129,5 +129,5 @@ Once `defender --version` succeeds and `defender agent --install` has run, retur
 | `Invoke-RestMethod` download fails | Check network connectivity; verify the download URL is reachable |
 | Authenticode signature `NotSigned` / `HashMismatch` | Do NOT run the script. Report failure to the user. Re-download and re-verify |
 | `& $scriptPath` fails with `$BaseUrl` validation error | Ensure `$BaseUrl = "cli.dfd.security.azure.com"` is set in the same scope before invocation |
-| PATH not picked up | Restart the terminal session, or `$env:PATH += ";$HOME\.aspm"` for the current session |
-| Linux/macOS — `defender: permission denied` | `chmod +x ~/.aspm/defender` |
+| PATH not picked up | Restart the terminal session, or `$env:PATH += ";$HOME\.mdc"` for the current session |
+| Linux/macOS — `defender: permission denied` | `chmod +x ~/.mdc/defender` |
