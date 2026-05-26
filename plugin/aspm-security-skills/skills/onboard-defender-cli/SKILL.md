@@ -1,13 +1,17 @@
 ---
 name: onboard-defender-cli
 description: |
-  Install and verify the Defender for Cloud CLI (`defender`) on the local machine.
+  Install, authenticate, and verify the Defender for Cloud CLI (`defender`) on the local machine.
   Downloads the standalone binary to `~/.mdc/`, verifies the install script's Authenticode
-  signature on Windows, and adds the binary to PATH. Use when the `defender` command is missing
-  or out of date, or when a user explicitly asks to install/onboard/set up the Defender for Cloud CLI.
+  signature on Windows, adds the binary to PATH, installs the bundled Copilot skills, and walks
+  the user through the two authentication paths (legacy `defender auth login` and ASPM auth-push
+  via `az login`). Use when the `defender` command is missing or out of date, when the user
+  has never authenticated, or when a user explicitly asks to install/onboard/set up/authenticate
+  the Defender for Cloud CLI.
   Triggers: "install defender cli", "onboard defender cli", "set up defender cli",
   "defender not found", "defender: command not found", "install aspm cli", "download defender cli",
-  "InstallCli.ps1", "get defender cli".
+  "InstallCli.ps1", "get defender cli", "defender auth", "defender login", "authenticate defender",
+  "set up defender auth".
 ---
 
 # Defender for Cloud CLI — Onboarding & Installation
@@ -28,6 +32,7 @@ For official documentation, see:
 ## Prerequisites
 
 - **PowerShell** (any platform — PowerShell Core or Windows PowerShell)
+- **Azure CLI (`az`)** — Step 1b below checks for it and installs it if missing.
 
 ## Step 1: Check if defender is already available
 
@@ -36,6 +41,47 @@ defender --version
 ```
 
 If the command succeeds, the CLI is already installed. Done — return to the calling skill.
+
+## Step 1b: Ensure Azure CLI is installed
+
+The `defender scan ai-scan` commands authenticate via `az login`, so the `az` CLI must be on PATH.
+
+```powershell
+az --version
+```
+
+If the command succeeds, skip to Step 2. Otherwise install it for the current platform:
+
+**Windows** — install via `winget` (preferred) or fall back to the official MSI:
+
+```powershell
+if (Get-Command winget -ErrorAction SilentlyContinue) {
+    winget install --exact --id Microsoft.AzureCLI --silent --accept-package-agreements --accept-source-agreements
+} else {
+    $msi = Join-Path ([System.IO.Path]::GetTempPath()) "AzureCLI.msi"
+    Invoke-WebRequest -Uri "https://aka.ms/installazurecliwindows" -OutFile $msi
+    Start-Process msiexec.exe -Wait -ArgumentList "/I $msi /quiet"
+    Remove-Item $msi
+}
+```
+
+**macOS** — install via Homebrew:
+
+```powershell
+brew update; brew install azure-cli
+```
+
+**Linux** — use the official Microsoft install script:
+
+```powershell
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash    # Debian / Ubuntu
+# RHEL / Fedora / CentOS:
+# sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+# curl -sL https://packages.microsoft.com/config/rhel/9/prod.repo | sudo tee /etc/yum.repos.d/azure-cli.repo
+# sudo dnf install -y azure-cli
+```
+
+After installation, restart the terminal (or refresh PATH) and re-run `az --version` to confirm. If it still fails, report the install failure to the user and stop — the ai-scan flow cannot proceed without `az`.
 
 ## Step 2: Download the install script
 
@@ -106,6 +152,8 @@ Restart the terminal if PATH was just added, then:
 defender --version
 ```
 
+# TODO: check az cli for tenants and prompt the user for the relevant tenant, then set the env var for the tenant id so the CLI is ready to use for scanning and auth flows
+
 ## Step 4: Install the bundled Copilot skills
 
 The `defender` binary ships with the companion Copilot CLI skills embedded inside it. Install them into the local Copilot skills folder (`$HOME/.copilot/skills`) so they are available to the agent:
@@ -118,9 +166,149 @@ Pass `--dest <path>` to install to a non-default location. The command always ov
 
 After this completes, the `run-security-scan` and `fix-security-issues` skills are available to the Copilot CLI.
 
+## Step 5: Authenticate
+
+The CLI exposes two distinct authentication paths. Set up the one(s) matching the scans the user plans to run. If unsure, set up both.
+
+| Scan type | Auth path |
+|-----------|-----------|
+| `scan image`, `scan fs`, `scan model`, `scan sbom` | **Path A — legacy `defender auth login`** (uses `GDN_MDC_CLI_*`). |
+| `scan ai-scan fetch-latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). |
+
+---
+
+### Path A — Legacy `defender auth login` (image / fs / model / sbom)
+
+**First-time configuration** — before the very first `defender auth login`, two environment variables must be set. These persist across sessions; skip this step if they are already defined.
+
+| Variable | Value |
+|----------|-------|
+| `GDN_MDC_CLI_CLIENT_ID` | The Azure-based integration resource app's **client ID** (provided by the user) |
+| `GDN_MDC_CLI_TENANT_ID` | The **Azure tenant ID** the user logs into (provided by the user) |
+
+Check whether they are already set:
+
+```powershell
+$env:GDN_MDC_CLI_CLIENT_ID; $env:GDN_MDC_CLI_TENANT_ID
+```
+
+If either is empty, ask the user for the values, then set them persistently:
+
+```powershell
+# Persistent (current user) — Windows
+[Environment]::SetEnvironmentVariable("GDN_MDC_CLI_CLIENT_ID", "<client-id>", "User")
+[Environment]::SetEnvironmentVariable("GDN_MDC_CLI_TENANT_ID", "<tenant-id>", "User")
+
+# Also set in current session so login works immediately
+$env:GDN_MDC_CLI_CLIENT_ID = "<client-id>"
+$env:GDN_MDC_CLI_TENANT_ID = "<tenant-id>"
+```
+
+On Linux/macOS, append `export GDN_MDC_CLI_CLIENT_ID=<client-id>` and `export GDN_MDC_CLI_TENANT_ID=<tenant-id>` to `~/.bashrc` or `~/.zshrc`, then `source` it.
+
+Then run interactive login and verify auth status:
+
+```powershell
+defender auth login --interactive-login
+```
+
+Wait for the browser-based login to complete. Then verify:
+
+```powershell
+defender auth status
+```
+
+**Auth status must succeed before proceeding.** If `auth status` shows no active session, re-run `auth login --interactive-login`.
+
+---
+
+### Path B — ASPM auth-push for `scan ai-scan` (interactive `az login` to FPA)
+
+Use this only when the user is running `defender scan ai-scan fetch-latest` or `defender scan ai-scan submit`. No client secret is needed.
+
+#### B0. Discover the DfD data tenant id
+
+The FPA-scoped `az login` in B1 requires a tenant id (`<DFD_DATA_TENANT_ID>`). Discover it from the `az` cache.
+
+```powershell
+# Ensure az has at least one account cached. If not, run a baseline `az login`
+# (no scope, no tenant) first so the tenant list can be enumerated.
+if (-not (az account show 2>$null)) {
+    az login | Out-Null
+}
+
+# Build a deduplicated list of (tenantId, tenantName) the user has access to.
+$tenants = az account list --query "[].{tenantId:tenantId, name:tenantDisplayName}" -o json `
+    | ConvertFrom-Json `
+    | Sort-Object tenantId -Unique
+
+if (-not $tenants -or $tenants.Count -eq 0) {
+    throw "No tenants found via 'az account list'. Run 'az login' manually and retry."
+}
+
+if ($tenants.Count -eq 1) {
+    $tenantId = $tenants[0].tenantId
+    Write-Host "Using the only available tenant: $($tenants[0].name) ($tenantId)"
+} else {
+    Write-Host "Multiple tenants are available:"
+    for ($i = 0; $i -lt $tenants.Count; $i++) {
+        Write-Host ("  [{0}] {1}  ({2})" -f $i, $tenants[$i].name, $tenants[$i].tenantId)
+    }
+    $choice = Read-Host "Select the DfD data tenant index"
+    if (-not ($choice -as [int]) -or $choice -lt 0 -or $choice -ge $tenants.Count) {
+        throw "Invalid selection: $choice"
+    }
+    $tenantId = $tenants[[int]$choice].tenantId
+    Write-Host "Using tenant: $($tenants[[int]$choice].name) ($tenantId)"
+}
+```
+
+`$tenantId` now holds the value to use as `<DFD_DATA_TENANT_ID>` in B1 and B2. The user must confirm the selected tenant is the one onboarded with DfD — picking a wrong tenant will cause the FPA token request to fail with `AADSTS500011` ("resource principal named ... not found").
+
+#### B1. Run `az login` against the FPA
+
+```powershell
+# FPA app id: b1a78a13-a596-4366-b37d-406048fa4a23
+
+az login `
+  --tenant $tenantId `
+  --scope b1a78a13-a596-4366-b37d-406048fa4a23/Defender.InteractiveLogin `
+  --allow-no-subscriptions
+```
+
+- `$tenantId` comes from B0.
+- The `--scope <fpa-app-id>/Defender.InteractiveLogin` requests a delegated token whose `aud` is the FPA. A generic `az login` will not produce a token the router accepts.
+- `--allow-no-subscriptions` is required because the FPA app is not bound to any Azure subscription.
+- The signed-in user must be granted the FPA roles `AiScan.Upload.Role` and `AiScan.Enabled.Role` by an admin.
+
+#### B2. Set the required environment variable
+
+```powershell
+$env:DEFENDER_DFD_TENANT_ID = $tenantId   # same value used in B1
+# Persist for future sessions (Windows, current user):
+[Environment]::SetEnvironmentVariable("DEFENDER_DFD_TENANT_ID", $tenantId, "User")
+```
+
+On Linux/macOS, append `export DEFENDER_DFD_TENANT_ID=$tenantId` to `~/.bashrc` or `~/.zshrc`, then `source` it.
+
+> Do **not** set `DEFENDER_ASPM_CLIENT_ID` or `DEFENDER_ASPM_CLIENT_SECRET` in this flow — their presence makes the CLI prefer the client-credentials path and ignore the `az` cache.
+
 ## After Installation
 
-Once `defender --version` succeeds and `defender agent --install` has run, return to the calling skill (e.g., [`run-security-scan`](../run-security-scan/SKILL.md)) to continue the original task (scanning, authentication, etc.).
+Once `defender --version` succeeds, `defender agent --install` has run, and the required auth path is set up, return to the calling skill (e.g., `run-security-scan`) to continue the original task.
+
+### Suggested next prompts
+
+Surface these to the user as ready-to-use chat prompts (not shell commands) once onboarding is complete:
+
+- "Scan this repo for security issues" - presents ranked findings.
+- "Scan this repo with the AI-powered scanner" — presents AI-powered findings.
+- "Show me the latest AI scan results for this repo" — presents the latest AI scan results.
+- "Scan the `<image>` container image for vulnerabilities" — presents image scan findings.
+- "Generate an SBOM for `<image>`" — presents SBOM findings.
+- "Scan this AI model directory" — presents AI model scan findings.
+
+After any of these, the user can reply `fix` (or `fix #N #M`) to hand the top findings to the `fix-security-issues` skill.
 
 ## Error Handling
 
