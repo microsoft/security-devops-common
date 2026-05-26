@@ -6,7 +6,7 @@ This project uses [GitHub Issues](https://github.com/microsoft/security-devops-c
 
 When filing an issue, please include:
 
-- The plugin name and version (from `plugin.json` or `marketplace.json`)
+- The plugin name and version (from `plugin.json`)
 - Steps to reproduce the problem
 - Expected vs. actual behavior
 - Your OS and Copilot CLI version (`copilot --version`)

@@ -5,11 +5,7 @@ Brings ASPM runtime intelligence into your developer workflow. Skills that scan,
 ## Install
 
 ```bash
-# 1. Register the marketplace (one-time)
-copilot plugin marketplace add microsoft/security-devops-common
-
-# 2. Install the plugin
-copilot plugin install aspm-security-skills@aspm-plugins
+copilot plugin install microsoft/security-devops-common:plugin/aspm-security-skills
 ```
 
 Verify:
@@ -39,5 +35,4 @@ In a `copilot` interactive session:
 ```bash
 copilot plugin update aspm-security-skills
 copilot plugin uninstall aspm-security-skills
-copilot plugin marketplace remove aspm-plugins
 ```

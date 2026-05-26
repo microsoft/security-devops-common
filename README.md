@@ -1,10 +1,10 @@
 # Microsoft Security DevOps
 
-Common infrastructure, schemata, and plugin marketplace for Microsoft Security DevOps tooling.
+Common infrastructure and plugins for Microsoft Security DevOps tooling.
 
-## Plugin Marketplace
+## Plugins
 
-This repository hosts the **plugin marketplace** for [GitHub Copilot CLI](https://github.com/github/copilot-cli) security plugins provided by ASPM.
+This repository hosts [GitHub Copilot CLI](https://github.com/github/copilot-cli) security plugins provided by ASPM.
 
 ### Available Plugins
 
@@ -12,18 +12,13 @@ This repository hosts the **plugin marketplace** for [GitHub Copilot CLI](https:
 |--------|-------------|
 | [`aspm-security-skills`](./plugin/aspm-security-skills/) | ASPM runtime-aware security skills — reactive scanning (capped at 5 findings) plus preventive secure code generation grounded in live deployment context. |
 
-See [`marketplace.json`](./marketplace.json) for the machine-readable plugin registry.
-
 ### Quick Start
 
 ```bash
-# 1. Register this marketplace (one-time)
-copilot plugin marketplace add microsoft/security-devops-common
+# Install the plugin
+copilot plugin install microsoft/security-devops-common:plugin/aspm-security-skills
 
-# 2. Install a plugin
-copilot plugin install aspm-security-skills@aspm-plugins
-
-# 3. Verify
+# Verify
 copilot plugin list
 ```
 
