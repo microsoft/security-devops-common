@@ -152,8 +152,6 @@ Restart the terminal if PATH was just added, then:
 defender --version
 ```
 
-# TODO: check az cli for tenants and prompt the user for the relevant tenant, then set the env var for the tenant id so the CLI is ready to use for scanning and auth flows
-
 ## Step 4: Install the bundled Copilot skills
 
 The `defender` binary ships with the companion Copilot CLI skills embedded inside it. Install them into the local Copilot skills folder (`$HOME/.copilot/skills`) so they are available to the agent:
@@ -173,7 +171,7 @@ The CLI exposes two distinct authentication paths. Set up the one(s) matching th
 | Scan type | Auth path |
 |-----------|-----------|
 | `scan image`, `scan fs`, `scan model`, `scan sbom` | **Path A — legacy `defender auth login`** (uses `GDN_MDC_CLI_*`). |
-| `scan ai-scan fetch-latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). |
+| `status result --latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). |
 
 ---
 
@@ -222,9 +220,9 @@ defender auth status
 
 ---
 
-### Path B — ASPM auth-push for `scan ai-scan` (interactive `az login` to FPA)
+### Path B — ASPM auth-push for `defender status result --latest` or `scan ai-scan` (interactive `az login` to FPA)
 
-Use this only when the user is running `defender scan ai-scan fetch-latest` or `defender scan ai-scan submit`. No client secret is needed.
+Use this only when the user is running `defender status result --latest` or `defender scan ai-scan submit`. No client secret is needed.
 
 #### B0. Discover the DfD data tenant id
 
@@ -317,5 +315,5 @@ After any of these, the user can reply `fix` (or `fix #N #M`) to hand the top fi
 | `Invoke-RestMethod` download fails | Check network connectivity; verify the download URL is reachable |
 | Authenticode signature `NotSigned` / `HashMismatch` | Do NOT run the script. Report failure to the user. Re-download and re-verify |
 | `& $scriptPath` fails with `$BaseUrl` validation error | Ensure `$BaseUrl = "cli.dfd.security.azure.com"` is set in the same scope before invocation |
-| PATH not picked up | Restart the terminal session, or `$env:PATH += ";$HOME\.mdc"` for the current session |
-| Linux/macOS — `defender: permission denied` | `chmod +x ~/.mdc/defender` |
+ | PATH not picked up | Restart the terminal session, or update PATH for the current session: Windows: `$env:PATH += ";$HOME\.mdc"`; Linux/macOS: `$env:PATH += ":$HOME/.mdc"` |
+ | Linux/macOS — `defender: permission denied` | `chmod +x ~/.mdc/defender` |
