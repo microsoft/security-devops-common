@@ -146,11 +146,19 @@ The script handles:
 
 ## Step 3: Verify
 
-Restart the terminal if PATH was just added, then:
+`InstallCli.ps1` updates the persistent PATH but does not always refresh the current session. Refresh it in-process, then verify:
 
 ```powershell
+# Prepend ~/.mdc to PATH for the current session if not already present
+$mdcDir = Join-Path $HOME ".mdc"
+if (-not ($env:PATH -split [IO.Path]::PathSeparator | Where-Object { $_ -eq $mdcDir })) {
+    $env:PATH = $mdcDir + [IO.Path]::PathSeparator + $env:PATH
+}
+
 defender --version
 ```
+
+If `defender` still cannot be resolved, restart the terminal and re-run `defender --version`.
 
 ## Step 4: Install the bundled Copilot skills
 
@@ -160,7 +168,7 @@ The `defender` binary ships with the companion Copilot CLI skills embedded insid
 defender agent --install
 ```
 
-Pass `--dest <path>` to install to a non-default location. The command always overwrites existing files so the installed skills match the CLI version.
+Pass `--dest <path>` to install to a non-default location. The command always overwrites existing files so the installed skills match the CLI version. This is **idempotent** — re-running this skill after a CLI upgrade refreshes the installed Copilot skills to match.
 
 After this completes, the `run-security-scan` and `fix-security-issues` skills are available to the Copilot CLI.
 
@@ -184,10 +192,19 @@ The CLI exposes two distinct authentication paths. Set up the one(s) matching th
 | `GDN_MDC_CLI_CLIENT_ID` | The Azure-based integration resource app's **client ID** (provided by the user) |
 | `GDN_MDC_CLI_TENANT_ID` | The **Azure tenant ID** the user logs into (provided by the user) |
 
-Check whether they are already set:
+> **Where these values come from:** the `GDN_MDC_CLI_CLIENT_ID` and `GDN_MDC_CLI_TENANT_ID` are issued by the team's DfD onboarding admin (the app registration that grants the CLI access). The skill cannot guess them. If the user does not have them, point them at the [Defender for Cloud CLI install doc](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install) or their internal onboarding instructions and stop until the values are available.
+
+Check whether both are set (the agent should reason on `$missing`, not the printed value):
 
 ```powershell
-$env:GDN_MDC_CLI_CLIENT_ID; $env:GDN_MDC_CLI_TENANT_ID
+$missing = @()
+if (-not $env:GDN_MDC_CLI_CLIENT_ID) { $missing += 'GDN_MDC_CLI_CLIENT_ID' }
+if (-not $env:GDN_MDC_CLI_TENANT_ID) { $missing += 'GDN_MDC_CLI_TENANT_ID' }
+if ($missing) {
+    Write-Host "Missing required env vars: $($missing -join ', ')"
+} else {
+    Write-Host "GDN_MDC_CLI_CLIENT_ID and GDN_MDC_CLI_TENANT_ID are set."
+}
 ```
 
 If either is empty, ask the user for the values, then set them persistently:
@@ -202,7 +219,13 @@ $env:GDN_MDC_CLI_CLIENT_ID = "<client-id>"
 $env:GDN_MDC_CLI_TENANT_ID = "<tenant-id>"
 ```
 
-On Linux/macOS, append `export GDN_MDC_CLI_CLIENT_ID=<client-id>` and `export GDN_MDC_CLI_TENANT_ID=<tenant-id>` to `~/.bashrc` or `~/.zshrc`, then `source` it.
+On Linux/macOS, append `export GDN_MDC_CLI_CLIENT_ID=<client-id>` and `export GDN_MDC_CLI_TENANT_ID=<tenant-id>` to `~/.bashrc` or `~/.zshrc`, then `source` it. **Make the append idempotent** so re-running the skill does not duplicate lines:
+
+```bash
+for kv in "GDN_MDC_CLI_CLIENT_ID=<client-id>" "GDN_MDC_CLI_TENANT_ID=<tenant-id>"; do
+    grep -qxF "export $kv" ~/.bashrc || echo "export $kv" >> ~/.bashrc
+done
+```
 
 Then run interactive login and verify auth status:
 
@@ -228,15 +251,23 @@ Use this only when the user is running `defender status result --latest` or `def
 
 The FPA-scoped `az login` in B1 requires a tenant id (`<DFD_DATA_TENANT_ID>`). Discover it from the `az` cache.
 
+> **Agents driving this skill:** when there are multiple tenants, surface the choice through the agent UI (e.g., `vscode_askQuestions`) instead of relying on the `Read-Host` fallback below — `Read-Host` blocks on stdin and cannot be answered programmatically. The `Read-Host` branch is the human-shell fallback only.
+
 ```powershell
 # Ensure az has at least one account cached. If not, run a baseline `az login`
-# (no scope, no tenant) first so the tenant list can be enumerated.
-if (-not (az account show 2>$null)) {
+# (no scope, no tenant) first so the tenant list can be enumerated. Use
+# $LASTEXITCODE — `az account show` writes JSON to stdout when logged in,
+# which evaluates as truthy regardless of success.
+az account show 2>$null 1>$null
+if ($LASTEXITCODE -ne 0) {
     az login | Out-Null
 }
 
-# Build a deduplicated list of (tenantId, tenantName) the user has access to.
-$tenants = az account list --query "[].{tenantId:tenantId, name:tenantDisplayName}" -o json `
+# Build a deduplicated list of tenants the user has access to. tenantDisplayName
+# can be empty for some tenants — fall back to defaultDomain, then tenantId.
+$tenants = az account list `
+    --query "[].{tenantId:tenantId, name:tenantDisplayName, defaultDomain:tenantDefaultDomain}" `
+    -o json `
     | ConvertFrom-Json `
     | Sort-Object tenantId -Unique
 
@@ -244,20 +275,26 @@ if (-not $tenants -or $tenants.Count -eq 0) {
     throw "No tenants found via 'az account list'. Run 'az login' manually and retry."
 }
 
+function Format-TenantLabel($t) {
+    if ($t.name)            { return $t.name }
+    elseif ($t.defaultDomain) { return $t.defaultDomain }
+    else                    { return $t.tenantId }
+}
+
 if ($tenants.Count -eq 1) {
     $tenantId = $tenants[0].tenantId
-    Write-Host "Using the only available tenant: $($tenants[0].name) ($tenantId)"
+    Write-Host "Using the only available tenant: $(Format-TenantLabel $tenants[0]) ($tenantId)"
 } else {
     Write-Host "Multiple tenants are available:"
     for ($i = 0; $i -lt $tenants.Count; $i++) {
-        Write-Host ("  [{0}] {1}  ({2})" -f $i, $tenants[$i].name, $tenants[$i].tenantId)
+        Write-Host ("  [{0}] {1}  ({2})" -f $i, (Format-TenantLabel $tenants[$i]), $tenants[$i].tenantId)
     }
     $choice = Read-Host "Select the DfD data tenant index"
     if (-not ($choice -as [int]) -or $choice -lt 0 -or $choice -ge $tenants.Count) {
         throw "Invalid selection: $choice"
     }
     $tenantId = $tenants[[int]$choice].tenantId
-    Write-Host "Using tenant: $($tenants[[int]$choice].name) ($tenantId)"
+    Write-Host "Using tenant: $(Format-TenantLabel $tenants[[int]$choice]) ($tenantId)"
 }
 ```
 
@@ -266,16 +303,18 @@ if ($tenants.Count -eq 1) {
 #### B1. Run `az login` against the FPA
 
 ```powershell
-# FPA app id: b1a78a13-a596-4366-b37d-406048fa4a23
+# DfD First-Party Application (FPA) app id — published constant.
+# Update this single value if the FPA is rotated.
+$fpaAppId = "b1a78a13-a596-4366-b37d-406048fa4a23"
 
 az login `
   --tenant $tenantId `
-  --scope b1a78a13-a596-4366-b37d-406048fa4a23/Defender.InteractiveLogin `
+  --scope "$fpaAppId/Defender.InteractiveLogin" `
   --allow-no-subscriptions
 ```
 
 - `$tenantId` comes from B0.
-- The `--scope <fpa-app-id>/Defender.InteractiveLogin` requests a delegated token whose `aud` is the FPA. A generic `az login` will not produce a token the router accepts.
+- `$fpaAppId` is the DfD First-Party Application id; the `--scope <fpa-app-id>/Defender.InteractiveLogin` requests a delegated token whose `aud` is the FPA. A generic `az login` will not produce a token the router accepts.
 - `--allow-no-subscriptions` is required because the FPA app is not bound to any Azure subscription.
 - The signed-in user must be granted the FPA roles `AiScan.Upload.Role` and `AiScan.Enabled.Role` by an admin.
 
@@ -287,7 +326,12 @@ $env:DEFENDER_DFD_TENANT_ID = $tenantId   # same value used in B1
 [Environment]::SetEnvironmentVariable("DEFENDER_DFD_TENANT_ID", $tenantId, "User")
 ```
 
-On Linux/macOS, append `export DEFENDER_DFD_TENANT_ID=$tenantId` to `~/.bashrc` or `~/.zshrc`, then `source` it.
+On Linux/macOS, append `export DEFENDER_DFD_TENANT_ID=$tenantId` to `~/.bashrc` or `~/.zshrc`, then `source` it. Use a guarded append so the line is not duplicated on re-runs:
+
+```bash
+line="export DEFENDER_DFD_TENANT_ID=$tenantId"
+grep -qxF "$line" ~/.bashrc || echo "$line" >> ~/.bashrc
+```
 
 > Do **not** set `DEFENDER_ASPM_CLIENT_ID` or `DEFENDER_ASPM_CLIENT_SECRET` in this flow — their presence makes the CLI prefer the client-credentials path and ignore the `az` cache.
 
