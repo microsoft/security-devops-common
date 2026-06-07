@@ -39,3 +39,7 @@ We prefer all communications to be in English.
 Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://aka.ms/opensource/security/cvd).
 
 <!-- END MICROSOFT SECURITY.MD BLOCK -->
+
+## Plugin Security
+
+Plugins published in this repository are maintained by Microsoft and follow the same security policies described above. If you discover a security vulnerability in any plugin, skill definition, or anything else, please report it through the MSRC process above — do **not** open a public GitHub issue.
