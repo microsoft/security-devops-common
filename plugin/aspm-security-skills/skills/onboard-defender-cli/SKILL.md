@@ -32,7 +32,7 @@ For official documentation, see:
 ## Prerequisites
 
 - **PowerShell** (any platform — PowerShell Core or Windows PowerShell)
-- **Azure CLI (`az`)** — Step 1b below checks for it and installs it if missing.
+- **Azure CLI (`az`)** — only required for **Path B** (ASPM auth-push). Path B installs it if missing; the install steps below and the legacy Path A do not need it.
 
 ## Step 1: Check if defender is already available
 
@@ -41,47 +41,6 @@ defender --version
 ```
 
 If the command succeeds, the CLI is already installed. Done — return to the calling skill.
-
-## Step 1b: Ensure Azure CLI is installed
-
-The `defender scan ai-scan` commands authenticate via `az login`, so the `az` CLI must be on PATH.
-
-```powershell
-az --version
-```
-
-If the command succeeds, skip to Step 2. Otherwise install it for the current platform:
-
-**Windows** — install via `winget` (preferred) or fall back to the official MSI:
-
-```powershell
-if (Get-Command winget -ErrorAction SilentlyContinue) {
-    winget install --exact --id Microsoft.AzureCLI --silent --accept-package-agreements --accept-source-agreements
-} else {
-    $msi = Join-Path ([System.IO.Path]::GetTempPath()) "AzureCLI.msi"
-    Invoke-WebRequest -Uri "https://aka.ms/installazurecliwindows" -OutFile $msi
-    Start-Process msiexec.exe -Wait -ArgumentList "/I `"$msi`" /quiet"
-    Remove-Item $msi
-}
-```
-
-**macOS** — install via Homebrew:
-
-```powershell
-brew update; brew install azure-cli
-```
-
-**Linux** — use the official Microsoft install script:
-
-```powershell
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash    # Debian / Ubuntu
-# RHEL / Fedora / CentOS:
-# sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-# curl -sL https://packages.microsoft.com/config/rhel/9/prod.repo | sudo tee /etc/yum.repos.d/azure-cli.repo
-# sudo dnf install -y azure-cli
-```
-
-After installation, restart the terminal (or refresh PATH) and re-run `az --version` to confirm. If it still fails, report the install failure to the user and stop — the ai-scan flow cannot proceed without `az`.
 
 ## Step 2: Download the install script
 
@@ -148,19 +107,13 @@ The script handles:
 
 ## Step 3: Verify
 
-`InstallCli.ps1` updates the persistent PATH but does not always refresh the current session. Refresh it in-process, then verify:
+`InstallCli.ps1` adds `~/.mdc/` to PATH (current session + persistent). Verify the CLI resolves:
 
 ```powershell
-# Prepend ~/.mdc to PATH for the current session if not already present
-$mdcDir = Join-Path $HOME ".mdc"
-if (-not ($env:PATH -split [IO.Path]::PathSeparator | Where-Object { $_ -eq $mdcDir })) {
-    $env:PATH = $mdcDir + [IO.Path]::PathSeparator + $env:PATH
-}
-
 defender --version
 ```
 
-If `defender` still cannot be resolved, restart the terminal and re-run `defender --version`.
+If `defender` cannot be resolved, open a new terminal (so the updated PATH is picked up) and re-run `defender --version`.
 
 ## Step 4: Install the bundled Copilot skills
 
@@ -249,11 +202,52 @@ defender auth status
 
 Use this only when the user is running `defender status result --latest` or `defender scan ai-scan submit`. No client secret is needed.
 
+#### B-pre. Ensure Azure CLI is installed
+
+Path B authenticates via `az login`, so the `az` CLI must be on PATH.
+
+```powershell
+az --version
+```
+
+If the command succeeds, skip to B0. Otherwise install it for the current platform:
+
+**Windows** — install via `winget` (preferred) or fall back to the official MSI:
+
+```powershell
+if (Get-Command winget -ErrorAction SilentlyContinue) {
+    winget install --exact --id Microsoft.AzureCLI --silent --accept-package-agreements --accept-source-agreements
+} else {
+    $msi = Join-Path ([System.IO.Path]::GetTempPath()) "AzureCLI.msi"
+    Invoke-WebRequest -Uri "https://aka.ms/installazurecliwindows" -OutFile $msi
+    Start-Process msiexec.exe -Wait -ArgumentList "/I `"$msi`" /quiet"
+    Remove-Item $msi
+}
+```
+
+**macOS** — install via Homebrew:
+
+```powershell
+brew update; brew install azure-cli
+```
+
+**Linux** — use the official Microsoft install script:
+
+```powershell
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash    # Debian / Ubuntu
+# RHEL / Fedora / CentOS:
+# sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+# curl -sL https://packages.microsoft.com/config/rhel/9/prod.repo | sudo tee /etc/yum.repos.d/azure-cli.repo
+# sudo dnf install -y azure-cli
+```
+
+After installation, restart the terminal (or refresh PATH) and re-run `az --version` to confirm. If it still fails, report the install failure to the user and stop — Path B cannot proceed without `az`.
+
 #### B0. Discover the DfD data tenant id
 
 The FPA-scoped `az login` in B1 requires a tenant id (`<DFD_DATA_TENANT_ID>`). Discover it from the `az` cache.
 
-> **Agents driving this skill:** when there are multiple tenants, surface the choice through the agent UI (e.g., `vscode_askQuestions`) instead of relying on the `Read-Host` fallback below — `Read-Host` blocks on stdin and cannot be answered programmatically. The `Read-Host` branch is the human-shell fallback only.
+> **Agents driving this skill:** when there are multiple tenants, surface the choice through the agent UI (e.g., `vscode_askQuestions`) and assign the selected index to `$choice` **before** running the block below. `Read-Host` blocks on stdin and cannot be answered programmatically, so it is only the human-shell fallback — the block skips it whenever `$choice` is already set.
 
 ```powershell
 # Ensure az has at least one account cached. If not, run a baseline `az login`
@@ -291,7 +285,14 @@ if ($tenants.Count -eq 1) {
     for ($i = 0; $i -lt $tenants.Count; $i++) {
         Write-Host ("  [{0}] {1}  ({2})" -f $i, (Format-TenantLabel $tenants[$i]), $tenants[$i].tenantId)
     }
-    $choice = Read-Host "Select the DfD data tenant index"
+    # The agent should pre-set $choice to the selected index (gathered via the
+    # agent UI, e.g. vscode_askQuestions) BEFORE running this block. Only fall
+    # back to the blocking Read-Host prompt in an interactive human shell — an
+    # agent driving this over a non-interactive stdin would otherwise hang here.
+    if (-not (Get-Variable choice -Scope 0 -ErrorAction SilentlyContinue) -or
+        [string]::IsNullOrWhiteSpace([string]$choice)) {
+        $choice = Read-Host "Select the DfD data tenant index"
+    }
     # Cast once: '0' is a valid index, and a string comparison like '10' -ge '3'
     # would otherwise let out-of-range values through.
     $idx = $choice -as [int]
