@@ -60,7 +60,7 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 } else {
     $msi = Join-Path ([System.IO.Path]::GetTempPath()) "AzureCLI.msi"
     Invoke-WebRequest -Uri "https://aka.ms/installazurecliwindows" -OutFile $msi
-    Start-Process msiexec.exe -Wait -ArgumentList "/I $msi /quiet"
+    Start-Process msiexec.exe -Wait -ArgumentList "/I `"$msi`" /quiet"
     Remove-Item $msi
 }
 ```
@@ -99,8 +99,10 @@ The mechanism depends on the OS — `Get-AuthenticodeSignature` is Windows-only.
 ```powershell
 if ($IsWindows -or $PSVersionTable.PSEdition -eq 'Desktop') {
     $sig = Get-AuthenticodeSignature $scriptPath
-    if ($sig.Status -ne 'Valid') {
-        throw "InstallCli.ps1 signature is $($sig.Status) — aborting. Do NOT run this script."
+    # 'Valid' only means the signature chains to a trusted root — not that
+    # Microsoft signed it. Also assert the signer is Microsoft Corporation.
+    if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation') {
+        throw "InstallCli.ps1 is not validly signed by Microsoft (status=$($sig.Status), signer=$($sig.SignerCertificate.Subject)) — aborting. Do NOT run this script."
     }
     Write-Host "Signature valid — signed by: $($sig.SignerCertificate.Subject)"
 }
@@ -290,11 +292,14 @@ if ($tenants.Count -eq 1) {
         Write-Host ("  [{0}] {1}  ({2})" -f $i, (Format-TenantLabel $tenants[$i]), $tenants[$i].tenantId)
     }
     $choice = Read-Host "Select the DfD data tenant index"
-    if (-not ($choice -as [int]) -or $choice -lt 0 -or $choice -ge $tenants.Count) {
+    # Cast once: '0' is a valid index, and a string comparison like '10' -ge '3'
+    # would otherwise let out-of-range values through.
+    $idx = $choice -as [int]
+    if ($null -eq $idx -or $idx -lt 0 -or $idx -ge $tenants.Count) {
         throw "Invalid selection: $choice"
     }
-    $tenantId = $tenants[[int]$choice].tenantId
-    Write-Host "Using tenant: $(Format-TenantLabel $tenants[[int]$choice]) ($tenantId)"
+    $tenantId = $tenants[$idx].tenantId
+    Write-Host "Using tenant: $(Format-TenantLabel $tenants[$idx]) ($tenantId)"
 }
 ```
 
@@ -326,12 +331,17 @@ $env:DEFENDER_DFD_TENANT_ID = $tenantId   # same value used in B1
 [Environment]::SetEnvironmentVariable("DEFENDER_DFD_TENANT_ID", $tenantId, "User")
 ```
 
-On Linux/macOS, append `export DEFENDER_DFD_TENANT_ID=$tenantId` to `~/.bashrc` or `~/.zshrc`, then `source` it. Use a guarded append so the line is not duplicated on re-runs:
+On Linux/macOS, persist the variable from the **PowerShell** side so the resolved `$tenantId` from B0 is substituted in (a literal `$tenantId` would expand to nothing in a separate bash shell and persist an empty value). Use a guarded append so the line is not duplicated on re-runs:
 
-```bash
-line="export DEFENDER_DFD_TENANT_ID=$tenantId"
-grep -qxF "$line" ~/.bashrc || echo "$line" >> ~/.bashrc
+```powershell
+$rc  = Join-Path $HOME ".bashrc"   # use .zshrc if the user's shell is zsh
+$line = "export DEFENDER_DFD_TENANT_ID=$tenantId"
+if (-not (Test-Path $rc) -or -not (Select-String -Path $rc -SimpleMatch $line -Quiet)) {
+    Add-Content -Path $rc -Value $line
+}
 ```
+
+Then `source ~/.bashrc` (or `~/.zshrc`) in the user's shell to load it into the current session.
 
 > Do **not** set `DEFENDER_ASPM_CLIENT_ID` or `DEFENDER_ASPM_CLIENT_SECRET` in this flow — their presence makes the CLI prefer the client-credentials path and ignore the `az` cache.
 
