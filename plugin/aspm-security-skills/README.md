@@ -1,6 +1,6 @@
-# ASPM Runtime-Aware Security — Copilot CLI Plugin
+# ASPM Security — Copilot CLI Plugin
 
-Brings ASPM runtime intelligence into your developer workflow. Skills that scan, generate, and remediate code with awareness of your live deployment context (internet exposure, attack paths, sensitive data).
+Brings ASPM intelligence into your developer workflow. Skills that scan, generate, and remediate code.
 
 ## Install
 
