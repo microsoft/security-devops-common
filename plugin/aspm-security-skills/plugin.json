@@ -1,7 +1,7 @@
 {
   "name": "aspm-security-skills",
-  "description": "ASPM runtime-aware security skills. Reactive scanning that caps at 5 findings, plus preventive secure code generation grounded in live deployment context (internet exposure, attack paths, PII handling).",
-  "version": "0.1.0",
+  "description": "ASPM security skills. Brings ASPM intelligence into your developer workflow. Skills that scan, generate, and remediate code securely",
+  "version": "0.1.1",
   "author": {
     "name": "ASPM"
   },
@@ -11,8 +11,7 @@
     "aspm",
     "scanning",
     "sarif",
-    "devsecops",
-    "runtime-context"
+    "devsecops"
   ],
   "skills": ["skills/"]
 }
