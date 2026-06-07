@@ -68,7 +68,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$InstallScriptUrl = 'https://cli.dfd.security.azure.com/public/latest/InstallCli.ps1'
+$InstallScriptUrl = 'https://cli.dfd.security.azure.com/public/v2/latest/InstallCli.ps1'
 $BaseUrlValue     = 'cli.dfd.security.azure.com'
 
 # DfD First-Party Application (FPA) app id — published constant. Update if the FPA is rotated.
