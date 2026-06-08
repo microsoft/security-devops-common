@@ -1,11 +1,11 @@
-# ASPM Security — Copilot CLI Plugin
+# Defender code security — Copilot CLI Plugin
 
-Brings ASPM intelligence into your developer workflow. Skills that scan, generate, and remediate code.
+Brings Defender Code Security intelligence into your developer workflow. Skills that scan, generate, and remediate code.
 
 ## Install
 
 ```bash
-copilot plugin install microsoft/security-devops-common:plugin/aspm-security-skills
+copilot plugin install microsoft/security-devops-common:plugin/defender-code-security
 ```
 
 Verify:
@@ -18,7 +18,7 @@ copilot plugin list
 
 | Skill | What it does |
 |-------|--------------|
-| [`onboard-defender-cli`](./skills/onboard-defender-cli/SKILL.md) | Installs the Defender for Cloud CLI (`defender`) binary, then installs the remaining ASPM skills (`run-security-scan`, `fix-security-issues`) by running `defender agent --install`. |
+| [`onboard-defender-cli`](./skills/onboard-defender-cli/SKILL.md) | Installs the Defender for Cloud CLI (`defender`) binary, then installs the remaining Defender Code Security skills (`run-security-scan`, `fix-security-issues`) by running `defender agent --install`. |
 
 ## Try it
 
@@ -33,6 +33,6 @@ In a `copilot` interactive session:
 ## Update / uninstall
 
 ```bash
-copilot plugin update aspm-security-skills
-copilot plugin uninstall aspm-security-skills
+copilot plugin update defender-code-security
+copilot plugin uninstall defender-code-security
 ```

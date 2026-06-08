@@ -1,14 +1,15 @@
 {
-  "name": "aspm-security-skills",
-  "description": "ASPM security skills. Brings ASPM intelligence into your developer workflow. Skills that scan, generate, and remediate code securely",
+  "name": "defender-code-security",
+  "description": "A collection of Copilot CLI skills that enable secure code development by combining preventive guidance during code generation with reactive scanning using Microsoft Defender CLI. The skills surface prioritized issues, recommend fixes, and expose AI-powered scan results from the repository directly in the developer environment.",
   "version": "0.1.1",
   "author": {
-    "name": "ASPM"
+    "name": "Defender Code Security"
   },
   "keywords": [
     "security",
     "defender",
     "aspm",
+    "code",
     "scanning",
     "sarif",
     "devsecops"
