@@ -165,9 +165,14 @@ macOS, the Microsoft apt script on Debian/Ubuntu) if missing:
 & $bootstrap -Step EnsureAzureCli
 ```
 
-If the phase throws (e.g., on an unsupported Linux distro such as RHEL/Fedora), install `az`
-manually per the [Azure CLI install docs](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+If the phase throws (e.g., on an unsupported Linux distro such as RHEL/Fedora, or macOS without
+Homebrew), install `az` manually per the [Azure CLI install docs](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
 and retry — Path B cannot proceed without `az`.
+
+> **Linux note:** the Debian/Ubuntu install path runs `curl ... | sudo bash`. In a
+> non-interactive/agent shell `sudo` will hang on the password prompt, and the pipe hides its
+> exit code. On Linux, run `-Step EnsureAzureCli` only where passwordless `sudo` is configured,
+> or install `az` manually beforehand.
 
 #### B0. Select the DfD data tenant
 
@@ -223,7 +228,7 @@ After any of these, the user can reply `fix` (or `fix #N #M`) to hand the top fi
 | Error | Resolution |
 |-------|------------|
 | `bootstrap.ps1` not found | The script ships with this skill at `scripts/bootstrap.ps1`. Resolve `$bootstrap` relative to this skill's directory (see "The bundled bootstrap script") |
-| `-Step Install` — `Invoke-RestMethod` download fails | Check network connectivity; verify `cli.dfd.security.azure.com` is reachable |
+| `-Step Install` — `Invoke-WebRequest` download fails | Check network connectivity; verify `cli.dfd.security.azure.com` is reachable |
 | `-Step Install` — Authenticode `NotSigned` / `HashMismatch` / non-Microsoft signer | Do NOT proceed. The bundled script aborts automatically on Windows. Report failure to the user; re-run `-Step Install` to re-download and re-verify |
 | `-Step Verify` — `defender` not on PATH | Open a new terminal so the persistent PATH is picked up, then re-run `-Step Verify`. To patch the current session manually: Windows: `$env:PATH += ";$HOME\.mdc"`; Linux/macOS: `$env:PATH += ":$HOME/.mdc"` |
  | `-Step AuthLegacy` — "Missing required value(s)" | Gather `GDN_MDC_CLI_CLIENT_ID` / `GDN_MDC_CLI_TENANT_ID` from the user (issued by the DfD onboarding admin) and pass them as `-ClientId` / `-TenantId` |
