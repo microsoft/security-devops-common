@@ -159,12 +159,16 @@ function Get-AzTenant {
     if ($LASTEXITCODE -ne 0) {
         az login | Out-Null
     }
-    $tenants = az account list `
-        --query "[].{tenantId:tenantId, name:tenantDisplayName, defaultDomain:tenantDefaultDomain}" `
+    # Use `az account tenant list`, not `az account list`: the latter only returns tenants
+    # that have a subscription. Path B logs in with --allow-no-subscriptions, so the DfD
+    # data tenant may have none and would be invisible here. `az account tenant list`
+    # enumerates every tenant the user can access regardless of subscriptions.
+    $tenants = az account tenant list `
+        --query "[].{tenantId:tenantId, name:displayName, defaultDomain:defaultDomain}" `
         -o json | ConvertFrom-Json | Sort-Object tenantId -Unique
     $tenants = @($tenants)
     if ($tenants.Count -eq 0) {
-        throw "No tenants found via 'az account list'. Run 'az login' manually and retry."
+        throw "No tenants found via 'az account tenant list'. Run 'az login' manually and retry."
     }
     return $tenants
 }
@@ -191,7 +195,7 @@ function Invoke-EnsureAzureCli {
             throw ("Homebrew ('brew') is required to install the Azure CLI on macOS but was " +
                    "not found. Install Homebrew (https://brew.sh) or install 'az' manually, then retry.")
         }
-        brew update
+        # No `brew update` — it's a slow full tap-sync; `brew install` resolves the formula on its own.
         brew install azure-cli
     } elseif ($IsLinux) {
         # Debian / Ubuntu only. RHEL/Fedora/CentOS users should install 'az' manually per
