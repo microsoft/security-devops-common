@@ -348,6 +348,17 @@ function Invoke-AuthAspm {
                "token request to fail with AADSTS500011.")
     }
 
+    # Validate -TenantId against the tenants the user can actually access. ListTenants and
+    # AuthAspm are separate phases, so the list is gone by now — re-enumerate and assert
+    # membership. This catches a transposed GUID, or the agent passing the printed `index`
+    # instead of the tenantId, up front instead of failing later as AADSTS500011.
+    $validIds = (Get-AzTenant).tenantId
+    if ($TenantId -notin $validIds) {
+        throw ("-TenantId '$TenantId' is not among the tenants you can access: " +
+               "$($validIds -join ', '). Re-run '-Step ListTenants' and pass the tenantId " +
+               "(not the index) of the DfD-onboarded tenant.")
+    }
+
     # FPA-scoped login: the --scope <fpa-app-id>/Defender.InteractiveLogin requests a delegated
     # token whose `aud` is the FPA. --allow-no-subscriptions is required because the FPA app is
     # not bound to any Azure subscription. A generic `az login` will not produce an accepted token.
