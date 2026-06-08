@@ -80,18 +80,62 @@ function Test-IsWindows {
     return ($IsWindows -or $PSVersionTable.PSEdition -eq 'Desktop')
 }
 
+function Invoke-Native {
+    # Run a native command and throw on a non-zero exit code. $ErrorActionPreference='Stop'
+    # does NOT make native commands throw on Windows PowerShell 5.1 / PS 7.0-7.3, so an
+    # `az`/`defender` failure would otherwise look like success. Route all native calls
+    # through here so a failed login/install fails the phase loudly.
+    param(
+        [Parameter(Mandatory)][string] $FilePath,
+        [Parameter(ValueFromRemainingArguments)][string[]] $Arguments
+    )
+    & $FilePath @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "'$FilePath $($Arguments -join ' ')' failed with exit code $LASTEXITCODE."
+    }
+}
+
 function Add-PersistentExport {
-    # Persist an env var on Linux/macOS by appending an idempotent `export` line to the
+    # Persist an env var on Linux/macOS by writing an idempotent `export` line to the
     # user's shell rc file. On Windows, [Environment]::SetEnvironmentVariable(...,'User')
     # handles persistence instead, so this is not used there.
     param(
         [Parameter(Mandatory)][string] $Name,
         [Parameter(Mandatory)][string] $Value
     )
-    $rcName = if ($env:SHELL -and $env:SHELL -match 'zsh') { '.zshrc' } else { '.bashrc' }
+    # macOS bash login shells read ~/.bash_profile (not ~/.bashrc); zsh reads ~/.zshrc on
+    # both platforms. Pick the file the user's next session will actually source.
+    if ($env:SHELL -and $env:SHELL -match 'zsh') {
+        $rcName = '.zshrc'
+    } elseif ($IsMacOS) {
+        $rcName = '.bash_profile'
+    } else {
+        $rcName = '.bashrc'
+    }
     $rc = Join-Path $HOME $rcName
-    $line = "export $Name=$Value"
-    if (-not (Test-Path $rc) -or -not (Select-String -Path $rc -SimpleMatch $line -Quiet)) {
+
+    # Single-quote and escape the value so nothing in it (e.g. $(...) command
+    # substitution) is expanded when the shell sources the rc file. Each embedded
+    # single quote becomes the standard '\'' bash idiom (close-quote, escaped quote,
+    # reopen-quote).
+    $escaped = $Value -replace "'", "'\''"
+    $line = "export $Name='$escaped'"
+
+    # Key idempotency on the variable NAME, not the whole line: if the value changes on a
+    # re-run (e.g. a different tenant), rewrite the existing export in place instead of
+    # appending a second conflicting one.
+    if (Test-Path $rc) {
+        $existing = Get-Content -Path $rc
+        $pattern  = "^\s*export\s+$([regex]::Escape($Name))="
+        if ($existing -match $pattern) {
+            $updated = $existing | ForEach-Object {
+                if ($_ -match $pattern) { $line } else { $_ }
+            }
+            Set-Content -Path $rc -Value $updated
+        } else {
+            Add-Content -Path $rc -Value $line
+        }
+    } else {
         Add-Content -Path $rc -Value $line
     }
     Write-Host "Persisted $Name to $rc (run 'source $rc' to load it into your current shell)."
@@ -104,6 +148,10 @@ function Format-TenantLabel($t) {
 }
 
 function Get-AzTenant {
+    if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+        throw ("'az' is not on PATH. Run this script with '-Step EnsureAzureCli' first " +
+               "(or install the Azure CLI manually), then retry.")
+    }
     # Ensure az has at least one cached account so tenants can be enumerated. Use
     # $LASTEXITCODE — `az account show` writes JSON to stdout when logged in, which
     # evaluates as truthy regardless of success.
@@ -139,17 +187,37 @@ function Invoke-EnsureAzureCli {
             Remove-Item $msi -ErrorAction SilentlyContinue
         }
     } elseif ($IsMacOS) {
+        if (-not (Get-Command brew -ErrorAction SilentlyContinue)) {
+            throw ("Homebrew ('brew') is required to install the Azure CLI on macOS but was " +
+                   "not found. Install Homebrew (https://brew.sh) or install 'az' manually, then retry.")
+        }
         brew update
         brew install azure-cli
     } elseif ($IsLinux) {
-        # Debian / Ubuntu. RHEL-family users should follow the manual repo steps
-        # documented in the skill instead.
+        # Debian / Ubuntu only. RHEL/Fedora/CentOS users should install 'az' manually per
+        # https://learn.microsoft.com/cli/azure/install-azure-cli-linux and re-run.
         bash -c 'curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash'
     } else {
         throw "Unsupported platform for automatic Azure CLI install. Install 'az' manually and retry."
     }
 
     if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+        # winget/MSI update the machine PATH, but the current process won't see it until a
+        # new shell starts. On Windows, reload PATH from the machine + user scopes and
+        # re-check before giving up; only warn (don't throw) if it still isn't visible.
+        if (Test-IsWindows) {
+            $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+            $userPath    = [Environment]::GetEnvironmentVariable('Path', 'User')
+            $env:PATH = (@($machinePath, $userPath) | Where-Object { $_ }) -join ';'
+            if (Get-Command az -ErrorAction SilentlyContinue) {
+                Write-Host "Azure CLI installed."
+                return
+            }
+            Write-Warning ("Azure CLI was installed but 'az' is not yet visible in this " +
+                           "session. Open a new terminal so the updated PATH is picked up, " +
+                           "then continue.")
+            return
+        }
         throw "Azure CLI install ran but 'az' is still not on PATH. Open a new terminal and retry."
     }
     Write-Host "Azure CLI installed."
@@ -157,7 +225,13 @@ function Invoke-EnsureAzureCli {
 
 function Invoke-Install {
     $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) 'InstallCli.ps1'
-    Invoke-RestMethod -Uri $InstallScriptUrl -OutFile $scriptPath
+    # Invoke-RestMethod -OutFile is PS6+; use Invoke-WebRequest for Windows PowerShell 5.1
+    # compatibility (this skill supports Windows PowerShell).
+    if ($PSVersionTable.PSEdition -eq 'Desktop') {
+        Invoke-WebRequest -Uri $InstallScriptUrl -OutFile $scriptPath -UseBasicParsing
+    } else {
+        Invoke-WebRequest -Uri $InstallScriptUrl -OutFile $scriptPath
+    }
 
     if (Test-IsWindows) {
         $sig = Get-AuthenticodeSignature $scriptPath
@@ -188,9 +262,23 @@ function Invoke-Install {
         } else {
             & $scriptPath
         }
+        # InstallCli.ps1 is a native-ish script invocation; with EAP forced to 'Continue'
+        # a non-zero exit would otherwise be swallowed and only surface later as a
+        # misleading "defender not on PATH" from Verify. Fail fast here instead.
+        if ($LASTEXITCODE -ne 0) {
+            throw "InstallCli.ps1 exited with code $LASTEXITCODE. Check the installer output above."
+        }
     } finally {
         $ErrorActionPreference = $prevEap
         Remove-Item $scriptPath -ErrorAction SilentlyContinue
+    }
+
+    # Confirm the binary was actually written — guards against an installer that returns
+    # 0 but did not produce the binary.
+    $mdcDir = Join-Path $HOME '.mdc'
+    if (-not (Test-Path (Join-Path $mdcDir 'defender')) -and
+        -not (Test-Path (Join-Path $mdcDir 'defender.exe'))) {
+        throw "InstallCli.ps1 completed but the defender binary was not found under $mdcDir. Check the installer output and retry."
     }
 }
 
@@ -199,12 +287,12 @@ function Invoke-Verify {
         throw ("'defender' is not on PATH. InstallCli.ps1 updated the persistent PATH; " +
                "open a new terminal so it is picked up, then retry.")
     }
-    defender --version
+    Invoke-Native defender --version
 }
 
 function Invoke-InstallSkills {
     # Idempotent: always overwrites so installed Copilot skills match the CLI version.
-    defender agent --install
+    Invoke-Native defender agent --install
 }
 
 function Invoke-AuthLegacy {
@@ -231,8 +319,10 @@ function Invoke-AuthLegacy {
         Add-PersistentExport 'GDN_MDC_CLI_TENANT_ID' $TenantId
     }
 
-    defender auth login --interactive-login
-    defender auth status
+    # Run login + status through Invoke-Native so a cancelled/expired login (native
+    # non-zero exit) fails the phase instead of silently returning success.
+    Invoke-Native defender auth login --interactive-login
+    Invoke-Native defender auth status
 }
 
 function Invoke-ListTenants {
@@ -261,7 +351,9 @@ function Invoke-AuthAspm {
     # FPA-scoped login: the --scope <fpa-app-id>/Defender.InteractiveLogin requests a delegated
     # token whose `aud` is the FPA. --allow-no-subscriptions is required because the FPA app is
     # not bound to any Azure subscription. A generic `az login` will not produce an accepted token.
-    az login `
+    # Use Invoke-Native: a failed/cancelled login (e.g. wrong tenant / AADSTS500011) must NOT
+    # fall through and persist a bad DEFENDER_DFD_TENANT_ID.
+    Invoke-Native az login `
         --tenant $TenantId `
         --scope "$FpaAppId/Defender.InteractiveLogin" `
         --allow-no-subscriptions
