@@ -10,13 +10,13 @@ This repository hosts [GitHub Copilot CLI](https://github.com/github/copilot-cli
 
 | Plugin | Description |
 |--------|-------------|
-| [`aspm-security-skills`](./plugin/aspm-security-skills/) | ASPM runtime-aware security skills — reactive scanning (capped at 5 findings) plus preventive secure code generation grounded in live deployment context. |
+| [`defender-code-security`](./plugin/defender-code-security/) | A collection of Copilot CLI skills that enable secure code development by combining preventive guidance during code generation with reactive scanning using the Microsoft Defender CLI. The skills surface prioritized issues, recommend fixes, and expose AI-powered scan results from the repository directly in the developer environment. |
 
 ### Quick Start
 
 ```bash
 # Install the plugin
-copilot plugin install microsoft/security-devops-common:plugin/aspm-security-skills
+copilot plugin install microsoft/security-devops-common:plugin/defender-code-security
 
 # Verify
 copilot plugin list
@@ -24,7 +24,7 @@ copilot plugin list
 
 ### Plugin Development
 
-Plugins live under [`plugin/`](./plugin/). Each plugin directory contains a `plugin.json` manifest and a `skills/` folder with one or more skill definitions. See the [aspm-security-skills README](./plugin/aspm-security-skills/README.md) for an example.
+Plugins live under [`plugin/`](./plugin/). Each plugin directory contains a `plugin.json` manifest and a `skills/` folder with one or more skill definitions. See the [defender-code-security README](./plugin/defender-code-security/README.md) for an example.
 
 ## Contributing
 
