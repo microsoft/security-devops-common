@@ -188,6 +188,14 @@ The FPA-scoped login needs the tenant id of the tenant onboarded with DfD. List 
 user can access with the bundled script's `ListTenants` phase — it runs a baseline `az login` if
 no account is cached, then emits the candidates as objects (`index`, `tenantId`, `label`, ...):
 
+> **Logins try the browser first, then fall back to device code.** Both the baseline login here
+> and the FPA login in B1 attempt an interactive browser `az login`; if that fails or doesn't
+> complete within ~2 minutes (e.g. a headless/agent shell with no browser), the script
+> automatically retries with `az login --use-device-code`. When the device-code path runs it
+> prints a `https://microsoft.com/devicelogin` URL and a one-time code — **surface that URL and
+> code to the user verbatim** and wait for them to complete sign-in. Do **not** improvise a
+> different login flow or swap in `az account list`; let the phases run.
+
 ```powershell
 # Re-resolve $bootstrap if authenticating in a fresh session.
 & $bootstrap -Step ListTenants
@@ -197,6 +205,14 @@ no account is cached, then emits the candidates as objects (`index`, `tenantId`,
 > them confirm which tenant is onboarded with DfD. If only one tenant is returned, use it.
 > Picking the wrong tenant makes the FPA token request fail with `AADSTS500011` ("resource
 > principal named ... not found").
+
+> **`az account tenant list` needs the `account` extension.** This phase enumerates tenants with
+> `az account tenant list`, which lives in the `account` dynamic *preview* extension. The script
+> pre-sets `extension.use_dynamic_install=yes_without_prompt` and
+> `extension.dynamic_install_allow_preview=true` so az installs it silently. Do **not** improvise
+> a workaround if you see an extension-install prompt — re-run `-Step ListTenants` (the settings
+> are applied each run), or set those two `az config` values manually and retry. Never skip
+> tenant selection.
 
 #### B1. Authenticate against the FPA and set the tenant env var
 
@@ -241,4 +257,6 @@ After any of these, the user can reply `fix` (or `fix #N #M`) to hand the top fi
 | `-Step Verify` — `defender` not on PATH | Open a new terminal so the persistent PATH is picked up, then re-run `-Step Verify`. To patch the current session manually: Windows: `$env:PATH += ";$HOME\.mdc"`; Linux/macOS: `$env:PATH += ":$HOME/.mdc"` |
  | `-Step AuthLegacy` — "Missing required value(s)" | Gather `GDN_MDC_CLI_CLIENT_ID` / `GDN_MDC_CLI_TENANT_ID` from the user (issued by the DfD onboarding admin) and pass them as `-ClientId` / `-TenantId` |
  | `-Step AuthAspm` — `az login` fails with `AADSTS500011` | Wrong tenant. Re-run `-Step ListTenants`, have the user confirm the DfD-onboarded tenant, then re-run `-Step AuthAspm -TenantId <confirmed>` |
+ | `-Step ListTenants` / `-Step AuthAspm` — az prompts to install the `account` extension (Y/n) or hangs | The `account` extension (for `az account tenant list`) is missing. The script auto-configures silent install; if you still see the prompt (older az / config not applied), run `az config set extension.use_dynamic_install=yes_without_prompt` and `az config set extension.dynamic_install_allow_preview=true`, then re-run the step. Do not bypass tenant selection. |
+ | `-Step ListTenants` / `-Step AuthAspm` — `az login` hangs or fails with an interactive/browser prompt | A headless shell has no browser. The script tries browser login first and auto-falls back to `az login --use-device-code` after ~2 minutes; surface the printed `microsoft.com/devicelogin` URL + code to the user and wait for sign-in. Do not switch to a different login flow or use `az account list` to work around it. |
  | Linux/macOS — `defender: permission denied` | `chmod +x ~/.mdc/defender` |
