@@ -1,0 +1,115 @@
+name: Skill tests
+
+# Validates the Copilot CLI skills under plugin/. Two independent jobs:
+#   * deterministic  - Pester suite (bootstrap.ps1 + SKILL.md lint + eval-spec). No LLM, no
+#                      secrets, cross-platform. Intended as a REQUIRED PR check.
+#   * behavioral     - live skill evals that drive the GitHub Copilot CLI. Non-deterministic,
+#                      needs a token + a Copilot subscription, costs tokens. Opt-in only
+#                      (manual dispatch or the 'run-skill-evals' label) — never blocks merges.
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "plugin/**"
+      - ".github/workflows/skill-tests.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "plugin/**"
+      - ".github/workflows/skill-tests.yml"
+  workflow_dispatch:
+    inputs:
+      run_behavioral_evals:
+        description: "Also run the live Copilot behavioral evals"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic:
+    name: Deterministic (Pester)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pester 5
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable Pester | Where-Object Version -ge '5.0.0')) {
+            Install-Module Pester -MinimumVersion 5.5.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+          Import-Module Pester -MinimumVersion 5.0.0
+          (Get-Module Pester).Version.ToString()
+
+      - name: Run deterministic skill tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $testDirs = Get-ChildItem -Path './plugin' -Directory -Recurse |
+            Where-Object { $_.Name -eq 'tests' -and (Get-ChildItem $_.FullName -Filter '*.Tests.ps1') }
+          if (-not $testDirs) { throw "No skill 'tests' folders with *.Tests.ps1 found under ./plugin." }
+
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path        = $testDirs.FullName
+          $cfg.Run.Throw       = $true          # non-zero exit if any test fails
+          $cfg.Output.Verbosity = 'Detailed'
+          $cfg.TestResult.Enabled    = $true
+          $cfg.TestResult.OutputPath = 'pester-results.xml'
+          Invoke-Pester -Configuration $cfg
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pester-results-${{ matrix.os }}
+          path: pester-results.xml
+          if-no-files-found: ignore
+
+  behavioral-evals:
+    name: Behavioral evals (Copilot CLI)
+    needs: deterministic
+    # Opt-in only: manual dispatch with the flag, or a PR labeled 'run-skill-evals'.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.run_behavioral_evals) ||
+      (github.event_name == 'pull_request' &&
+       contains(join(github.event.pull_request.labels.*.name, ','), 'run-skill-evals'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install GitHub Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Run behavioral evals
+        shell: pwsh
+        env:
+          # A token with Copilot access. Store it as a repo/org secret named COPILOT_CLI_TOKEN.
+          # The Copilot CLI reads COPILOT_CLI_TOKEN (or GH_TOKEN) for non-interactive auth.
+          COPILOT_CLI_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
+          GH_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:COPILOT_CLI_TOKEN)) {
+            throw "COPILOT_CLI_TOKEN secret is not set — cannot authenticate the Copilot CLI for evals."
+          }
+          $runners = Get-ChildItem -Path './plugin' -Recurse -Filter 'Invoke-SkillEvals.ps1'
+          if (-not $runners) { throw "No Invoke-SkillEvals.ps1 found under ./plugin." }
+          foreach ($r in $runners) {
+            Write-Host "::group::Evals — $($r.FullName)"
+            & $r.FullName
+            if ($LASTEXITCODE -ne 0) { Write-Host "::endgroup::"; throw "Evals failed: $($r.FullName)" }
+            Write-Host "::endgroup::"
+          }

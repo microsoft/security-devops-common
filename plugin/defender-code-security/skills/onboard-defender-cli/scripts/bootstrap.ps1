@@ -382,12 +382,18 @@ function Invoke-AuthAspm {
     Write-Host "DEFENDER_DFD_TENANT_ID set to $TenantId (session + persistent)."
 }
 
-switch ($Step) {
-    'EnsureAzureCli' { Invoke-EnsureAzureCli }
-    'Install'        { Invoke-Install }
-    'Verify'         { Invoke-Verify }
-    'InstallSkills'  { Invoke-InstallSkills }
-    'AuthLegacy'     { Invoke-AuthLegacy }
-    'ListTenants'    { Invoke-ListTenants }
-    'AuthAspm'       { Invoke-AuthAspm }
+# Dispatch the requested phase — but ONLY when the script is executed (`& bootstrap.ps1`),
+# not when it is dot-sourced (`. bootstrap.ps1`). Dot-sourcing defines the functions above
+# without running anything, which is what the Pester tests rely on. When dot-sourced,
+# $MyInvocation.InvocationName is '.'.
+if ($MyInvocation.InvocationName -ne '.') {
+    switch ($Step) {
+        'EnsureAzureCli' { Invoke-EnsureAzureCli }
+        'Install'        { Invoke-Install }
+        'Verify'         { Invoke-Verify }
+        'InstallSkills'  { Invoke-InstallSkills }
+        'AuthLegacy'     { Invoke-AuthLegacy }
+        'ListTenants'    { Invoke-ListTenants }
+        'AuthAspm'       { Invoke-AuthAspm }
+    }
 }
