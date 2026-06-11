@@ -34,13 +34,15 @@ For official documentation, see:
 - **PowerShell** (any platform — PowerShell Core or Windows PowerShell)
 - **Azure CLI (`az`)** — only required for **Path B** (ASPM auth-push). Path B installs it if missing; the install steps below and the legacy Path A do not need it.
 
-## Step 1: Check if defender is already available
+## Step 1: Check the currently installed version (informational)
 
 ```powershell
 defender --version
 ```
 
-If the command succeeds, the CLI is already installed. Done — return to the calling skill.
+This is informational only — **do not stop if it succeeds.** Onboarding always installs the
+latest CLI in Step 2, replacing any existing version, so a user on an old build is upgraded in
+place. Note the reported version (or that the command was not found) and continue to Step 2.
 
 ## The bundled bootstrap script
 
@@ -64,7 +66,8 @@ remote installer is a separate trust boundary from this local script.
 ## Step 2: Install the CLI
 
 Download Microsoft's `InstallCli.ps1`, verify its Authenticode signature (Windows), and run it
-to install the `defender` binary to `~/.mdc/`:
+to install the `defender` binary to `~/.mdc/`. This always installs the **latest** version,
+overwriting any existing install — so re-running onboarding upgrades an out-of-date CLI in place:
 
 ```powershell
 & $bootstrap -Step Install
