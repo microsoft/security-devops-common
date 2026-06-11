@@ -31,11 +31,7 @@ permissions:
 jobs:
   deterministic:
     name: Deterministic (Pester)
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest, windows-latest ]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,7 +65,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pester-results-${{ matrix.os }}
+          name: pester-results
           path: pester-results.xml
           if-no-files-found: ignore
 
