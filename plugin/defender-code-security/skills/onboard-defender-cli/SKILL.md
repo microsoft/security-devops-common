@@ -182,9 +182,9 @@ and retry — Path B cannot proceed without `az`.
 > exit code. On Linux, run `-Step EnsureAzureCli` only where passwordless `sudo` is configured,
 > or install `az` manually beforehand.
 
-#### B0. Select the DfD data tenant
+#### B0. Select the tenant
 
-The FPA-scoped login needs the tenant id of the tenant onboarded with DfD. List the tenants the
+The FPA-scoped login needs the tenant id of the tenant to use. List the tenants the
 user can access with the bundled script's `ListTenants` phase — it runs a baseline `az login` if
 no account is cached, then emits the candidates as objects (`index`, `tenantId`, `label`, ...):
 
@@ -202,7 +202,7 @@ no account is cached, then emits the candidates as objects (`index`, `tenantId`,
 ```
 
 > **Surface the choice to the user through the agent UI** (e.g., `vscode_askQuestions`) and have
-> them confirm which tenant is onboarded with DfD. If only one tenant is returned, use it.
+> them confirm which tenant they would like to use. If only one tenant is returned, use it.
 > Picking the wrong tenant makes the FPA token request fail with `AADSTS500011` ("resource
 > principal named ... not found").
 
@@ -256,7 +256,7 @@ After any of these, the user can reply `fix` (or `fix #N #M`) to hand the top fi
 | `-Step Install` — Authenticode `NotSigned` / `HashMismatch` / non-Microsoft signer | Do NOT proceed. The bundled script aborts automatically on Windows. Report failure to the user; re-run `-Step Install` to re-download and re-verify |
 | `-Step Verify` — `defender` not on PATH | Open a new terminal so the persistent PATH is picked up, then re-run `-Step Verify`. To patch the current session manually: Windows: `$env:PATH += ";$HOME\.mdc"`; Linux/macOS: `$env:PATH += ":$HOME/.mdc"` |
  | `-Step AuthLegacy` — "Missing required value(s)" | Gather `GDN_MDC_CLI_CLIENT_ID` / `GDN_MDC_CLI_TENANT_ID` from the user (issued by the DfD onboarding admin) and pass them as `-ClientId` / `-TenantId` |
- | `-Step AuthAspm` — `az login` fails with `AADSTS500011` | Wrong tenant. Re-run `-Step ListTenants`, have the user confirm the DfD-onboarded tenant, then re-run `-Step AuthAspm -TenantId <confirmed>` |
+ | `-Step AuthAspm` — `az login` fails with `AADSTS500011` | Wrong tenant. Re-run `-Step ListTenants`, have the user confirm the tenant, then re-run `-Step AuthAspm -TenantId <confirmed>` |
  | `-Step ListTenants` / `-Step AuthAspm` — az prompts to install the `account` extension (Y/n) or hangs | The `account` extension (for `az account tenant list`) is missing. The script auto-configures silent install; if you still see the prompt (older az / config not applied), run `az config set extension.use_dynamic_install=yes_without_prompt` and `az config set extension.dynamic_install_allow_preview=true`, then re-run the step. Do not bypass tenant selection. |
  | `-Step ListTenants` / `-Step AuthAspm` — `az login` hangs or fails with an interactive/browser prompt | A headless shell has no browser. The script tries browser login first and auto-falls back to `az login --use-device-code` after ~2 minutes; surface the printed `microsoft.com/devicelogin` URL + code to the user and wait for sign-in. Do not switch to a different login flow or use `az account list` to work around it. |
  | Linux/macOS — `defender: permission denied` | `chmod +x ~/.mdc/defender` |
