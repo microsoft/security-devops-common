@@ -34,13 +34,15 @@ For official documentation, see:
 - **PowerShell** (any platform — PowerShell Core or Windows PowerShell)
 - **Azure CLI (`az`)** — only required for **Path B** (ASPM auth-push). Path B installs it if missing; the install steps below and the legacy Path A do not need it.
 
-## Step 1: Check if defender is already available
+## Step 1: Check the currently installed version (informational)
 
 ```powershell
 defender --version
 ```
 
-If the command succeeds, the CLI is already installed. Done — return to the calling skill.
+This is informational only — **do not stop if it succeeds.** Onboarding always installs the
+latest CLI in Step 2, replacing any existing version, so a user on an old build is upgraded in
+place. Note the reported version (or that the command was not found) and continue to Step 2.
 
 ## The bundled bootstrap script
 
@@ -64,7 +66,8 @@ remote installer is a separate trust boundary from this local script.
 ## Step 2: Install the CLI
 
 Download Microsoft's `InstallCli.ps1`, verify its Authenticode signature (Windows), and run it
-to install the `defender` binary to `~/.mdc/`:
+to install the `defender` binary to `~/.mdc/`. This always installs the **latest** version,
+overwriting any existing install — so re-running onboarding upgrades an out-of-date CLI in place:
 
 ```powershell
 & $bootstrap -Step Install
@@ -115,16 +118,23 @@ the Copilot CLI.
 
 ## Step 5: Authenticate
 
-The CLI exposes two distinct authentication paths. Set up the one(s) matching the scans the user plans to run. If unsure, set up both.
+The CLI exposes two distinct authentication paths. **Path B (ASPM auth-push) is the default — set it up now during onboarding.** Path A is **deferred**: it is needed only for the local scan commands (`scan image`, `scan fs`, `scan model`, `scan sbom`) and should **not** be set up during onboarding. The `run-security-scan` skill routes the user back here for Path A on demand, the first time they run a local scan.
 
-| Scan type | Auth path |
-|-----------|-----------|
-| `scan image`, `scan fs`, `scan model`, `scan sbom` | **Path A — legacy `defender auth login`** (uses `GDN_MDC_CLI_*`). |
-| `status result --latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). |
+| Scan type | Auth path | When to set up |
+|-----------|-----------|----------------|
+| `status result --latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). | **Now — default.** |
+| `scan image`, `scan fs`, `scan model`, `scan sbom` | **Path A — legacy `defender auth login`** (uses `GDN_MDC_CLI_*`). | On demand — only when a local scan is requested. |
+
+By default, complete **Path B** now and stop. Set up **Path A** only if the user explicitly asks to run a local scan during onboarding.
 
 ---
 
-### Path A — Legacy `defender auth login` (image / fs / model / sbom)
+### Path A — Legacy `defender auth login` (image / fs / model / sbom) — on-demand only
+
+> **Do not run Path A during initial onboarding.** It is required only when the user actually
+> invokes a local scan (`scan image` / `scan fs` / `scan model` / `scan sbom`); the
+> `run-security-scan` skill routes back here at that point. If you are onboarding for the first
+> time, complete **Path B** (below) and stop.
 
 **First-time configuration** — before the very first `defender auth login`, two environment variables must be set. These persist across sessions; skip this step if they are already defined.
 
@@ -149,9 +159,10 @@ Wait for the browser-based login to complete. The phase prints `defender auth st
 
 ---
 
-### Path B — ASPM auth-push for `defender status result --latest` or `scan ai-scan` (interactive `az login` to FPA)
+### Path B — ASPM auth-push for `defender status result --latest` or `scan ai-scan` (interactive `az login` to FPA) — default
 
-Use this only when the user is running `defender status result --latest` or `defender scan ai-scan submit`. No client secret is needed.
+> **This is the default authentication path — always set it up during onboarding.** It covers
+> `defender status result --latest` and `defender scan ai-scan submit`. No client secret is needed.
 
 #### B-pre. Ensure Azure CLI is installed
 
@@ -174,11 +185,19 @@ and retry — Path B cannot proceed without `az`.
 > exit code. On Linux, run `-Step EnsureAzureCli` only where passwordless `sudo` is configured,
 > or install `az` manually beforehand.
 
-#### B0. Select the DfD data tenant
+#### B0. Select the tenant
 
-The FPA-scoped login needs the tenant id of the tenant onboarded with DfD. List the tenants the
+The FPA-scoped login needs the tenant id of the tenant to use. List the tenants the
 user can access with the bundled script's `ListTenants` phase — it runs a baseline `az login` if
 no account is cached, then emits the candidates as objects (`index`, `tenantId`, `label`, ...):
+
+> **Logins try the browser first, then fall back to device code.** Both the baseline login here
+> and the FPA login in B1 attempt an interactive browser `az login`; if that fails or doesn't
+> complete within ~2 minutes (e.g. a headless/agent shell with no browser), the script
+> automatically retries with `az login --use-device-code`. When the device-code path runs it
+> prints a `https://microsoft.com/devicelogin` URL and a one-time code — **surface that URL and
+> code to the user verbatim** and wait for them to complete sign-in. Do **not** improvise a
+> different login flow or swap in `az account list`; let the phases run.
 
 ```powershell
 # Re-resolve $bootstrap if authenticating in a fresh session.
@@ -186,9 +205,17 @@ no account is cached, then emits the candidates as objects (`index`, `tenantId`,
 ```
 
 > **Surface the choice to the user through the agent UI** (e.g., `vscode_askQuestions`) and have
-> them confirm which tenant is onboarded with DfD. If only one tenant is returned, use it.
+> them confirm which tenant they would like to use. If only one tenant is returned, use it.
 > Picking the wrong tenant makes the FPA token request fail with `AADSTS500011` ("resource
 > principal named ... not found").
+
+> **`az account tenant list` needs the `account` extension.** This phase enumerates tenants with
+> `az account tenant list`, which lives in the `account` dynamic *preview* extension. The script
+> pre-sets `extension.use_dynamic_install=yes_without_prompt` and
+> `extension.dynamic_install_allow_preview=true` so az installs it silently. Do **not** improvise
+> a workaround if you see an extension-install prompt — re-run `-Step ListTenants` (the settings
+> are applied each run), or set those two `az config` values manually and retry. Never skip
+> tenant selection.
 
 #### B1. Authenticate against the FPA and set the tenant env var
 
@@ -232,5 +259,7 @@ After any of these, the user can reply `fix` (or `fix #N #M`) to hand the top fi
 | `-Step Install` — Authenticode `NotSigned` / `HashMismatch` / non-Microsoft signer | Do NOT proceed. The bundled script aborts automatically on Windows. Report failure to the user; re-run `-Step Install` to re-download and re-verify |
 | `-Step Verify` — `defender` not on PATH | Open a new terminal so the persistent PATH is picked up, then re-run `-Step Verify`. To patch the current session manually: Windows: `$env:PATH += ";$HOME\.mdc"`; Linux/macOS: `$env:PATH += ":$HOME/.mdc"` |
  | `-Step AuthLegacy` — "Missing required value(s)" | Gather `GDN_MDC_CLI_CLIENT_ID` / `GDN_MDC_CLI_TENANT_ID` from the user (issued by the DfD onboarding admin) and pass them as `-ClientId` / `-TenantId` |
- | `-Step AuthAspm` — `az login` fails with `AADSTS500011` | Wrong tenant. Re-run `-Step ListTenants`, have the user confirm the DfD-onboarded tenant, then re-run `-Step AuthAspm -TenantId <confirmed>` |
+ | `-Step AuthAspm` — `az login` fails with `AADSTS500011` | Wrong tenant. Re-run `-Step ListTenants`, have the user confirm the tenant, then re-run `-Step AuthAspm -TenantId <confirmed>` |
+ | `-Step ListTenants` / `-Step AuthAspm` — az prompts to install the `account` extension (Y/n) or hangs | The `account` extension (for `az account tenant list`) is missing. The script auto-configures silent install; if you still see the prompt (older az / config not applied), run `az config set extension.use_dynamic_install=yes_without_prompt` and `az config set extension.dynamic_install_allow_preview=true`, then re-run the step. Do not bypass tenant selection. |
+ | `-Step ListTenants` / `-Step AuthAspm` — `az login` hangs or fails with an interactive/browser prompt | A headless shell has no browser. The script tries browser login first and auto-falls back to `az login --use-device-code` after ~2 minutes; surface the printed `microsoft.com/devicelogin` URL + code to the user and wait for sign-in. Do not switch to a different login flow or use `az account list` to work around it. |
  | Linux/macOS — `defender: permission denied` | `chmod +x ~/.mdc/defender` |

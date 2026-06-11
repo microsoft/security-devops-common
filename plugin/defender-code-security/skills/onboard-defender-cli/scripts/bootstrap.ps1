@@ -95,6 +95,51 @@ function Invoke-Native {
     }
 }
 
+function Invoke-AzLogin {
+    # Prefer an interactive browser login, but fall back to the device-code flow if the
+    # browser attempt fails or does not complete in time. A browser login hangs in a
+    # headless/agent shell that has no browser to open, so the browser attempt is bounded
+    # by a timeout: if it does not finish, we cancel it and retry with --use-device-code
+    # (which prints a URL + one-time code that works headlessly). The same login args
+    # (tenant / scope / --allow-no-subscriptions / ...) are passed through to both attempts.
+    param(
+        [Parameter(ValueFromRemainingArguments)][string[]] $Arguments
+    )
+
+    $browserTimeoutSec = 120
+
+    # Run the browser attempt as a background job so a missing browser can't hang the phase
+    # forever. The job inherits PATH + the az token cache (~/.azure), so a successful login
+    # there persists for the subsequent `az account ...` calls in this process.
+    Write-Host "Attempting interactive browser login (falls back to device code after ${browserTimeoutSec}s)..."
+    $job = Start-Job -ScriptBlock {
+        param($AzArgs)
+        $out = & az @AzArgs 2>&1 | Out-String
+        [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $out }
+    } -ArgumentList (, (@('login') + $Arguments))
+
+    $result = $null
+    if (Wait-Job $job -Timeout $browserTimeoutSec) {
+        $result = Receive-Job $job
+    } else {
+        Write-Host "Browser login did not complete within ${browserTimeoutSec}s — falling back to device code."
+        Stop-Job $job -ErrorAction SilentlyContinue
+    }
+    Remove-Job $job -Force -ErrorAction SilentlyContinue
+
+    if ($result -and $result.ExitCode -eq 0) {
+        if ($result.Output) { Write-Host $result.Output.Trim() }
+        return
+    }
+    if ($result -and $result.Output) {
+        Write-Host "Browser login failed; falling back to device code:`n$($result.Output.Trim())"
+    }
+
+    # Fallback: device-code flow in the foreground so the user sees the URL + code live.
+    # Invoke-Native so a cancelled/expired device-code login fails the phase loudly.
+    Invoke-Native az login @Arguments --use-device-code
+}
+
 function Add-PersistentExport {
     # Persist an env var on Linux/macOS by writing an idempotent `export` line to the
     # user's shell rc file. On Windows, [Environment]::SetEnvironmentVariable(...,'User')
@@ -157,8 +202,20 @@ function Get-AzTenant {
     # evaluates as truthy regardless of success.
     az account show 2>$null 1>$null
     if ($LASTEXITCODE -ne 0) {
-        az login | Out-Null
+        # Browser login first, with an automatic device-code fallback for headless/agent
+        # shells (see Invoke-AzLogin). --allow-no-subscriptions so a user whose only access
+        # is the subscription-less DfD data tenant can still sign in.
+        Invoke-AzLogin --allow-no-subscriptions
     }
+    # `az account tenant list` is provided by the `account` dynamic *preview* extension, which
+    # is not installed by default. Without the two settings below, az interactively prompts
+    # ("The command requires the extension account. Do you want to install it now? (Y/n):"),
+    # which hangs in a non-interactive/agent shell and makes this phase fail. Configure az to
+    # install the extension silently (incl. preview) so the command runs unattended. Both are
+    # best-effort: suppress output and ignore failures so an older az without these keys still
+    # proceeds (it will just prompt, matching prior behaviour).
+    az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors 2>$null 1>$null
+    az config set extension.dynamic_install_allow_preview=true --only-show-errors 2>$null 1>$null
     # Use `az account tenant list`, not `az account list`: the latter only returns tenants
     # that have a subscription. Path B logs in with --allow-no-subscriptions, so the DfD
     # data tenant may have none and would be invisible here. `az account tenant list`
@@ -366,9 +423,10 @@ function Invoke-AuthAspm {
     # FPA-scoped login: the --scope <fpa-app-id>/Defender.InteractiveLogin requests a delegated
     # token whose `aud` is the FPA. --allow-no-subscriptions is required because the FPA app is
     # not bound to any Azure subscription. A generic `az login` will not produce an accepted token.
-    # Use Invoke-Native: a failed/cancelled login (e.g. wrong tenant / AADSTS500011) must NOT
-    # fall through and persist a bad DEFENDER_DFD_TENANT_ID.
-    Invoke-Native az login `
+    # Invoke-AzLogin tries browser login first and falls back to device code for headless/agent
+    # shells. It runs through Invoke-Native, so a failed/cancelled login (e.g. wrong tenant /
+    # AADSTS500011) throws and does NOT fall through to persist a bad DEFENDER_DFD_TENANT_ID.
+    Invoke-AzLogin `
         --tenant $TenantId `
         --scope "$FpaAppId/Defender.InteractiveLogin" `
         --allow-no-subscriptions
