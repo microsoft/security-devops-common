@@ -115,16 +115,23 @@ the Copilot CLI.
 
 ## Step 5: Authenticate
 
-The CLI exposes two distinct authentication paths. Set up the one(s) matching the scans the user plans to run. If unsure, set up both.
+The CLI exposes two distinct authentication paths. **Path B (ASPM auth-push) is the default — set it up now during onboarding.** Path A is **deferred**: it is needed only for the local scan commands (`scan image`, `scan fs`, `scan model`, `scan sbom`) and should **not** be set up during onboarding. The `run-security-scan` skill routes the user back here for Path A on demand, the first time they run a local scan.
 
-| Scan type | Auth path |
-|-----------|-----------|
-| `scan image`, `scan fs`, `scan model`, `scan sbom` | **Path A — legacy `defender auth login`** (uses `GDN_MDC_CLI_*`). |
-| `status result --latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). |
+| Scan type | Auth path | When to set up |
+|-----------|-----------|----------------|
+| `status result --latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). | **Now — default.** |
+| `scan image`, `scan fs`, `scan model`, `scan sbom` | **Path A — legacy `defender auth login`** (uses `GDN_MDC_CLI_*`). | On demand — only when a local scan is requested. |
+
+By default, complete **Path B** now and stop. Set up **Path A** only if the user explicitly asks to run a local scan during onboarding.
 
 ---
 
-### Path A — Legacy `defender auth login` (image / fs / model / sbom)
+### Path A — Legacy `defender auth login` (image / fs / model / sbom) — on-demand only
+
+> **Do not run Path A during initial onboarding.** It is required only when the user actually
+> invokes a local scan (`scan image` / `scan fs` / `scan model` / `scan sbom`); the
+> `run-security-scan` skill routes back here at that point. If you are onboarding for the first
+> time, complete **Path B** (below) and stop.
 
 **First-time configuration** — before the very first `defender auth login`, two environment variables must be set. These persist across sessions; skip this step if they are already defined.
 
@@ -149,9 +156,10 @@ Wait for the browser-based login to complete. The phase prints `defender auth st
 
 ---
 
-### Path B — ASPM auth-push for `defender status result --latest` or `scan ai-scan` (interactive `az login` to FPA)
+### Path B — ASPM auth-push for `defender status result --latest` or `scan ai-scan` (interactive `az login` to FPA) — default
 
-Use this only when the user is running `defender status result --latest` or `defender scan ai-scan submit`. No client secret is needed.
+> **This is the default authentication path — always set it up during onboarding.** It covers
+> `defender status result --latest` and `defender scan ai-scan submit`. No client secret is needed.
 
 #### B-pre. Ensure Azure CLI is installed
 
