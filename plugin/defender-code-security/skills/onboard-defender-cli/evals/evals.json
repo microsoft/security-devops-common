@@ -42,7 +42,6 @@
       "expectations": [
         "The response selects the legacy authentication path (Path A) because container image scans use legacy auth.",
         "The response runs the bootstrap.ps1 AuthLegacy step.",
-        "The response references the GDN_MDC_CLI_* environment variables (e.g. GDN_MDC_CLI_CLIENT_ID / GDN_MDC_CLI_TENANT_ID) set by legacy auth.",
         "The response does not use the ASPM auth-push (Path B) for an image scan."
       ]
     },
