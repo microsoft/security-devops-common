@@ -211,7 +211,8 @@ Describe 'Invoke-AuthAspm (Path B)' {
         $TenantId = $null
         Mock Test-IsWindows { $false }
         Mock Add-PersistentExport {}
-        Mock Invoke-AzLogin {}
+        # Invoke-AuthAspm runs the FPA-scoped `az login` through Invoke-Native.
+        Mock Invoke-Native {}
         Mock Get-AzTenant {
             @(
                 [pscustomobject]@{ tenantId = '11111111-1111-1111-1111-111111111111' },
@@ -233,13 +234,13 @@ Describe 'Invoke-AuthAspm (Path B)' {
         $TenantId = '11111111-1111-1111-1111-111111111111'
         Invoke-AuthAspm
         $env:DEFENDER_DFD_TENANT_ID | Should -Be '11111111-1111-1111-1111-111111111111'
-        Should -Invoke Invoke-AzLogin -Times 1
+        Should -Invoke Invoke-Native -Times 1
         Should -Invoke Add-PersistentExport -Times 1
     }
 
     It 'does NOT persist the tenant when login fails' {
         $TenantId = '11111111-1111-1111-1111-111111111111'
-        Mock Invoke-AzLogin { throw 'AADSTS500011' }
+        Mock Invoke-Native { throw 'AADSTS500011' }
         { Invoke-AuthAspm } | Should -Throw '*AADSTS500011*'
         $env:DEFENDER_DFD_TENANT_ID | Should -BeNullOrEmpty
         Should -Invoke Add-PersistentExport -Times 0
