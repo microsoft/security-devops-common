@@ -3,7 +3,7 @@ name: onboard-defender-cli
 description: |
   Install, authenticate, and verify the Defender for Cloud CLI (`defender`) on the local machine.
   Downloads the standalone binary to `~/.mdc/`, verifies the install script's Authenticode
-  signature on Windows, adds the binary to PATH, installs the bundled Copilot skills, and walks
+  signature on Windows, adds the binary to PATH, installs the bundled agent skills, and walks
   the user through the two authentication paths (legacy `defender auth login` and ASPM auth-push
   via `az login`). Use when the `defender` command is missing or out of date, when the user
   has never authenticated, or when a user explicitly asks to install/onboard/set up/authenticate
@@ -99,22 +99,29 @@ Corporation; on Linux/macOS it warns that Authenticode validation is unavailable
 This confirms `defender --version` resolves on PATH. If it throws, open a new terminal (so the
 updated PATH is picked up) and re-run `& $bootstrap -Step Verify`.
 
-## Step 4: Install the bundled Copilot skills
+## Step 4: Install the bundled agent skills
 
-The `defender` binary ships with the companion Copilot CLI skills embedded inside it. Install
-them into the local Copilot skills folder (`$HOME/.copilot/skills`) so they are available to the
-agent:
+The `defender` binary ships with the companion `run-security-scan` and `fix-security-issues`
+skills embedded inside it. Install them into your agent's skills folder so they are available to
+the agent:
 
 ```powershell
 & $bootstrap -Step InstallSkills
 ```
 
-This runs `defender agent --install`, which always overwrites existing files so the installed
-skills match the CLI version. It is **idempotent** — re-running this skill after a CLI upgrade
-refreshes the installed Copilot skills to match.
+This runs `defender agent --install`, which **auto-detects the installed agent harnesses** and
+writes the skills into each one it finds (e.g. GitHub Copilot, Claude Code). It always overwrites
+existing files so the installed skills match the CLI version, and is **idempotent** — re-running
+this skill after a CLI upgrade refreshes the installed skills to match.
+
+> Auto-detection covers the common case and adapts as the CLI adds support for new agents — you
+> do not need to know which harnesses exist. To target a specific agent or location explicitly,
+> run the CLI directly instead of the bootstrap phase: `defender agent --install --agent <name>`
+> (run `defender agent --install --help` to list supported agents), or
+> `defender agent --install --dest <path>`.
 
 After this completes, the `run-security-scan` and `fix-security-issues` skills are available to
-the Copilot CLI.
+your agent.
 
 ## Step 5: Authenticate
 
