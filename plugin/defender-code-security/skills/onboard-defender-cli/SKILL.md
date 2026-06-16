@@ -1,33 +1,33 @@
 ---
 name: onboard-defender-cli
 description: |
-  Install, authenticate, and verify the Defender for Cloud CLI (`defender`) on the local machine.
+  Install, authenticate, and verify the Defender CLI (`defender`) on the local machine.
   Downloads the standalone binary to `~/.mdc/`, verifies the install script's Authenticode
   signature on Windows, adds the binary to PATH, installs the bundled Copilot skills, and walks
   the user through the two authentication paths (legacy `defender auth login` and ASPM auth-push
   via `az login`). Use when the `defender` command is missing or out of date, when the user
   has never authenticated, or when a user explicitly asks to install/onboard/set up/authenticate
-  the Defender for Cloud CLI.
+  the Defender CLI.
   Triggers: "install defender cli", "onboard defender cli", "set up defender cli",
   "defender not found", "defender: command not found", "install aspm cli", "download defender cli",
   "InstallCli.ps1", "get defender cli", "defender auth", "defender login", "authenticate defender",
   "set up defender auth".
 ---
 
-# Defender for Cloud CLI — Onboarding & Installation
+# Defender CLI — Onboarding & Installation
 
-Install the Defender for Cloud CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
+Install the Defender CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
 
 For official documentation, see:
 
-- [Defender for Cloud CLI overview](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-overview)
-- [Install the Defender for Cloud CLI](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install)
+- [Defender CLI overview](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-overview)
+- [Install the Defender CLI](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install)
 
 ## When to Use
 
 - The `defender` command is not on PATH
 - A scan skill (e.g., `run-security-scan`) reports the CLI is missing
-- The user explicitly asks to install, onboard, set up, or download the Defender for Cloud CLI
+- The user explicitly asks to install, onboard, set up, or download the Defender CLI
 
 ## Prerequisites
 
@@ -133,7 +133,7 @@ The CLI exposes two distinct authentication paths. Set up the one(s) matching th
 | `GDN_MDC_CLI_CLIENT_ID` | The Azure-based integration resource app's **client ID** (provided by the user) |
 | `GDN_MDC_CLI_TENANT_ID` | The **Azure tenant ID** the user logs into (provided by the user) |
 
-> **Where these values come from:** the `GDN_MDC_CLI_CLIENT_ID` and `GDN_MDC_CLI_TENANT_ID` are issued by the team's DfD onboarding admin (the app registration that grants the CLI access). The skill cannot guess them. If the user does not have them, point them at the [Defender for Cloud CLI install doc](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install) or their internal onboarding instructions and stop until the values are available.
+> **Where these values come from:** the `GDN_MDC_CLI_CLIENT_ID` and `GDN_MDC_CLI_TENANT_ID` are issued by the team's DfD onboarding admin (the app registration that grants the CLI access). The skill cannot guess them. If the user does not have them, point them at the [Defender CLI install doc](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install) or their internal onboarding instructions and stop until the values are available.
 
 Gather the two values from the user, then run the bundled script's `AuthLegacy` phase. It persists them (session + `User` env on Windows, or an idempotent `export` in the shell rc file on Linux/macOS), runs the interactive login, and verifies `defender auth status`:
 

@@ -7,14 +7,14 @@
       "expected_output": "Recognizes the CLI is missing and onboards it: resolves the bundled scripts/bootstrap.ps1 and runs the Install phase (then Verify, then InstallSkills).",
       "files": [],
       "expectations": [
-        "The response routes a missing-binary error to onboarding the Defender for Cloud CLI rather than treating it as a generic shell error.",
+        "The response routes a missing-binary error to onboarding the Defender CLI rather than treating it as a generic shell error.",
         "The response runs the bundled scripts/bootstrap.ps1 with the Install step (e.g. & $bootstrap -Step Install).",
         "After installing, the response continues with the Verify step before declaring success."
       ]
     },
     {
       "id": 2,
-      "prompt": "Install and set up the Defender for Cloud CLI on my machine.",
+      "prompt": "Install and set up the Defender CLI on my machine.",
       "expected_output": "Walks the Install phase then the Verify phase via bootstrap.ps1.",
       "files": [],
       "expectations": [
