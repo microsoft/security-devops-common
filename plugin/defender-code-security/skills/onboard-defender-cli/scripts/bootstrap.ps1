@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Bootstraps the Defender for Cloud CLI (`defender`). Bundled plugin asset for the
+    Bootstraps the Defender CLI (`defender`). Bundled plugin asset for the
     onboard-defender-cli skill. Runs a single phase at a time, selected with -Step.
 
 .DESCRIPTION

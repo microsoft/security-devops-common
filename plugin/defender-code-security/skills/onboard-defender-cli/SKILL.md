@@ -1,32 +1,32 @@
 ---
 name: onboard-defender-cli
 description: |
-  Install, authenticate, and verify the Defender for Cloud CLI (`defender`) on the local machine.
+  Install, authenticate, and verify the Defender CLI (`defender`) on the local machine.
   Downloads the standalone binary to `~/.mdc/`, verifies the install script's Authenticode
   signature on Windows, adds the binary to PATH, installs the bundled agent skills, and
   authenticates to the ASPM API via an interactive `az login` (Azure CLI). Use when the
   `defender` command is missing or out of date, when the user has never authenticated, or when
-  a user explicitly asks to install/onboard/set up/authenticate the Defender for Cloud CLI.
+  a user explicitly asks to install/onboard/set up/authenticate the Defender CLI.
   Triggers: "install defender cli", "onboard defender cli", "set up defender cli",
   "defender not found", "defender: command not found", "install aspm cli", "download defender cli",
   "InstallCli.ps1", "get defender cli", "defender auth", "defender login", "authenticate defender",
   "set up defender auth".
 ---
 
-# Defender for Cloud CLI — Onboarding & Installation
+# Defender CLI — Onboarding & Installation
 
-Install the Defender for Cloud CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
+Install the Defender CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
 
 For official documentation, see:
 
-- [Defender for Cloud CLI overview](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-overview)
-- [Install the Defender for Cloud CLI](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install)
+- [Defender CLI overview](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-overview)
+- [Install the Defender CLI](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install)
 
 ## When to Use
 
 - The `defender` command is not on PATH
 - A scan skill (e.g., `run-security-scan`) reports the CLI is missing
-- The user explicitly asks to install, onboard, set up, or download the Defender for Cloud CLI
+- The user explicitly asks to install, onboard, set up, or download the Defender CLI
 
 ## Prerequisites
 
@@ -130,7 +130,7 @@ and is required **only** for the ASPM-backed commands — `defender status resul
 
 > **Local scans need no authentication.** `scan image`, `scan fs`, `scan model`, and `scan sbom`
 > run fully against the local target without signing in. Unauthenticated, they simply do not
-> publish results to Microsoft Defender for Cloud — the CLI prints a one-line
+> publish results to Microsoft Defender — the CLI prints a one-line
 > `Running without authentication` warning and continues, which is the intended behavior. Do
 > **not** set up authentication for local scans.
 
