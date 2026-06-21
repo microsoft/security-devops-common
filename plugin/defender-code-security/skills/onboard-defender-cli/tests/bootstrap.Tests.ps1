@@ -45,7 +45,7 @@ Describe 'Parameter validation (-Step ValidateSet)' {
     }
 
     It 'accepts every documented step name' {
-        $expected = 'EnsureAzureCli', 'Install', 'Verify', 'InstallSkills', 'AuthLegacy', 'ListTenants', 'AuthAspm'
+        $expected = 'EnsureAzureCli', 'Install', 'Verify', 'InstallSkills', 'ListTenants', 'AuthAspm'
         $attr = (Get-Command $script:BootstrapPath).Parameters['Step'].Attributes |
             Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
         $attr.ValidValues | Should -Be $expected
@@ -158,49 +158,6 @@ Describe 'Get-AzTenant' {
     It "throws a clear error when 'az' is not on PATH" {
         Mock Get-Command { $null } -ParameterFilter { $Name -eq 'az' }
         { Get-AzTenant } | Should -Throw "*'az' is not on PATH*"
-    }
-}
-
-Describe 'Invoke-AuthLegacy (Path A)' {
-    BeforeEach {
-        Remove-Item env:GDN_MDC_CLI_CLIENT_ID -ErrorAction SilentlyContinue
-        Remove-Item env:GDN_MDC_CLI_TENANT_ID -ErrorAction SilentlyContinue
-        # The function reads the script-level $ClientId/$TenantId parameters via dynamic scope,
-        # not its own args. Clear them so each test controls them explicitly.
-        $ClientId = $null
-        $TenantId = $null
-        # Treat as non-Windows so persistence routes through the mockable Add-PersistentExport
-        # instead of writing to the real Windows User environment.
-        Mock Test-IsWindows { $false }
-        Mock Add-PersistentExport {}
-        Mock Invoke-Native {}
-    }
-
-    It 'throws naming both missing values when neither params nor env vars are set' {
-        { Invoke-AuthLegacy } | Should -Throw '*Missing required value*'
-    }
-
-    It 'names only the missing value when one is supplied' {
-        $ClientId = 'cid'
-        { Invoke-AuthLegacy } | Should -Throw '*TenantId*'
-    }
-
-    It 'persists supplied values and runs login + status' {
-        $ClientId = 'cid-1'
-        $TenantId = 'tid-1'
-        Invoke-AuthLegacy
-        $env:GDN_MDC_CLI_CLIENT_ID | Should -Be 'cid-1'
-        $env:GDN_MDC_CLI_TENANT_ID | Should -Be 'tid-1'
-        Should -Invoke Add-PersistentExport -Times 2
-        # defender auth login + defender auth status
-        Should -Invoke Invoke-Native -Times 2
-    }
-
-    It 'falls back to env vars when params are omitted' {
-        $env:GDN_MDC_CLI_CLIENT_ID = 'env-cid'
-        $env:GDN_MDC_CLI_TENANT_ID = 'env-tid'
-        { Invoke-AuthLegacy } | Should -Not -Throw
-        Should -Invoke Invoke-Native -Times 2
     }
 }
 
