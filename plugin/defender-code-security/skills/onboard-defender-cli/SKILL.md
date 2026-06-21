@@ -1,38 +1,37 @@
 ---
 name: onboard-defender-cli
 description: |
-  Install, authenticate, and verify the Defender for Cloud CLI (`defender`) on the local machine.
+  Install, authenticate, and verify the Defender CLI (`defender`) on the local machine.
   Downloads the standalone binary to `~/.mdc/`, verifies the install script's Authenticode
-  signature on Windows, adds the binary to PATH, installs the bundled agent skills, and walks
-  the user through the two authentication paths (legacy `defender auth login` and ASPM auth-push
-  via `az login`). Use when the `defender` command is missing or out of date, when the user
-  has never authenticated, or when a user explicitly asks to install/onboard/set up/authenticate
-  the Defender for Cloud CLI.
+  signature on Windows, adds the binary to PATH, installs the bundled agent skills, and
+  authenticates to the ASPM API via an interactive `az login` (Azure CLI). Use when the
+  `defender` command is missing or out of date, when the user has never authenticated, or when
+  a user explicitly asks to install/onboard/set up/authenticate the Defender CLI.
   Triggers: "install defender cli", "onboard defender cli", "set up defender cli",
   "defender not found", "defender: command not found", "install aspm cli", "download defender cli",
   "InstallCli.ps1", "get defender cli", "defender auth", "defender login", "authenticate defender",
   "set up defender auth".
 ---
 
-# Defender for Cloud CLI — Onboarding & Installation
+# Defender CLI — Onboarding & Installation
 
-Install the Defender for Cloud CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
+Install the Defender CLI (`defender`) on the local machine. The CLI is a standalone binary installed to `~/.mdc/`.
 
 For official documentation, see:
 
-- [Defender for Cloud CLI overview](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-overview)
-- [Install the Defender for Cloud CLI](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install)
+- [Defender CLI overview](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-overview)
+- [Install the Defender CLI](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install)
 
 ## When to Use
 
 - The `defender` command is not on PATH
 - A scan skill (e.g., `run-security-scan`) reports the CLI is missing
-- The user explicitly asks to install, onboard, set up, or download the Defender for Cloud CLI
+- The user explicitly asks to install, onboard, set up, or download the Defender CLI
 
 ## Prerequisites
 
 - **PowerShell** (any platform — PowerShell Core or Windows PowerShell)
-- **Azure CLI (`az`)** — only required for **Path B** (ASPM auth-push). Path B installs it if missing; the install steps below and the legacy Path A do not need it.
+- **Azure CLI (`az`)** — required only for **authentication** (ASPM auth-push, Step 5). The auth step installs it if missing; the install/verify/skills steps do not need it.
 
 ## Step 1: Check the currently installed version (informational)
 
@@ -59,7 +58,7 @@ $bootstrap = Join-Path "<skill-dir>" "scripts/bootstrap.ps1"
 ```
 
 Each `-Step` is idempotent and safe to re-run. Run them in order: `Install` → `Verify` →
-`InstallSkills` (plus `EnsureAzureCli` in Path B). Note that the `Install` step still downloads
+`InstallSkills` (plus `EnsureAzureCli` for authentication). Note that the `Install` step still downloads
 Microsoft's `InstallCli.ps1` and verifies **its** Authenticode signature on Windows — that
 remote installer is a separate trust boundary from this local script.
 
@@ -125,55 +124,19 @@ your agent.
 
 ## Step 5: Authenticate
 
-The CLI exposes two distinct authentication paths. **Path B (ASPM auth-push) is the default — set it up now during onboarding.** Path A is **deferred**: it is needed only for the local scan commands (`scan image`, `scan fs`, `scan model`, `scan sbom`) and should **not** be set up during onboarding. The `run-security-scan` skill routes the user back here for Path A on demand, the first time they run a local scan.
+Authentication signs the CLI in to the DfD First-Party App (FPA) via an interactive `az login`,
+and is required **only** for the ASPM-backed commands — `defender status result --latest` and
+`defender scan ai-scan *`. No client secret is needed. Set it up now during onboarding.
 
-| Scan type | Auth path | When to set up |
-|-----------|-----------|----------------|
-| `status result --latest`, `scan ai-scan submit` | **Path B — ASPM auth-push** (interactive `az login` to the DfD FPA). | **Now — default.** |
-| `scan image`, `scan fs`, `scan model`, `scan sbom` | **Path A — legacy `defender auth login`** (uses `GDN_MDC_CLI_*`). | On demand — only when a local scan is requested. |
+> **Local scans need no authentication.** `scan image`, `scan fs`, `scan model`, and `scan sbom`
+> run fully against the local target without signing in. Unauthenticated, they simply do not
+> publish results to Microsoft Defender — the CLI prints a one-line
+> `Running without authentication` warning and continues, which is the intended behavior. Do
+> **not** set up authentication for local scans.
 
-By default, complete **Path B** now and stop. Set up **Path A** only if the user explicitly asks to run a local scan during onboarding.
+### Step 5a. Ensure Azure CLI is installed
 
----
-
-### Path A — Legacy `defender auth login` (image / fs / model / sbom) — on-demand only
-
-> **Do not run Path A during initial onboarding.** It is required only when the user actually
-> invokes a local scan (`scan image` / `scan fs` / `scan model` / `scan sbom`); the
-> `run-security-scan` skill routes back here at that point. If you are onboarding for the first
-> time, complete **Path B** (below) and stop.
-
-**First-time configuration** — before the very first `defender auth login`, two environment variables must be set. These persist across sessions; skip this step if they are already defined.
-
-| Variable | Value |
-|----------|-------|
-| `GDN_MDC_CLI_CLIENT_ID` | The Azure-based integration resource app's **client ID** (provided by the user) |
-| `GDN_MDC_CLI_TENANT_ID` | The **Azure tenant ID** the user logs into (provided by the user) |
-
-> **Where these values come from:** the `GDN_MDC_CLI_CLIENT_ID` and `GDN_MDC_CLI_TENANT_ID` are issued by the team's DfD onboarding admin (the app registration that grants the CLI access). The skill cannot guess them. If the user does not have them, point them at the [Defender for Cloud CLI install doc](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-cli-install) or their internal onboarding instructions and stop until the values are available.
-
-Gather the two values from the user, then run the bundled script's `AuthLegacy` phase. It persists them (session + `User` env on Windows, or an idempotent `export` in the shell rc file on Linux/macOS), runs the interactive login, and verifies `defender auth status`:
-
-```powershell
-# Re-resolve $bootstrap if authenticating in a fresh session (see "The bundled bootstrap
-# script" section):  $bootstrap = Join-Path "<skill-dir>" "scripts/bootstrap.ps1"
-& $bootstrap -Step AuthLegacy -ClientId "<client-id>" -TenantId "<tenant-id>"
-```
-
-If the values are already set in `GDN_MDC_CLI_CLIENT_ID` / `GDN_MDC_CLI_TENANT_ID`, you may omit the parameters — the phase falls back to those env vars and throws (naming what is missing) if neither source supplies them.
-
-Wait for the browser-based login to complete. The phase prints `defender auth status`. **Auth status must succeed before proceeding.** If it shows no active session, re-run the same command.
-
----
-
-### Path B — ASPM auth-push for `defender status result --latest` or `scan ai-scan` (interactive `az login` to FPA) — default
-
-> **This is the default authentication path — always set it up during onboarding.** It covers
-> `defender status result --latest` and `defender scan ai-scan submit`. No client secret is needed.
-
-#### B-pre. Ensure Azure CLI is installed
-
-Path B authenticates via `az login`, so the `az` CLI must be on PATH. Use the bundled script's
+Authentication runs `az login`, so the `az` CLI must be on PATH. Use the bundled script's
 `EnsureAzureCli` phase — it checks for `az` and installs it (winget/MSI on Windows, Homebrew on
 macOS, the Microsoft apt script on Debian/Ubuntu) if missing:
 
@@ -185,21 +148,21 @@ macOS, the Microsoft apt script on Debian/Ubuntu) if missing:
 
 If the phase throws (e.g., on an unsupported Linux distro such as RHEL/Fedora, or macOS without
 Homebrew), install `az` manually per the [Azure CLI install docs](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
-and retry — Path B cannot proceed without `az`.
+and retry — authentication cannot proceed without `az`.
 
 > **Linux note:** the Debian/Ubuntu install path runs `curl ... | sudo bash`. In a
 > non-interactive/agent shell `sudo` will hang on the password prompt, and the pipe hides its
 > exit code. On Linux, run `-Step EnsureAzureCli` only where passwordless `sudo` is configured,
 > or install `az` manually beforehand.
 
-#### B0. Select the tenant
+### Step 5b. Select the tenant
 
 The FPA-scoped login needs the tenant id of the tenant to use. List the tenants the
 user can access with the bundled script's `ListTenants` phase — it runs a baseline `az login` if
 no account is cached, then emits the candidates as objects (`index`, `tenantId`, `label`, ...):
 
 > **Logins try the browser first, then fall back to device code.** Both the baseline login here
-> and the FPA login in B1 attempt an interactive browser `az login`; if that fails or doesn't
+> and the FPA login in Step 5c attempt an interactive browser `az login`; if that fails or doesn't
 > complete within ~2 minutes (e.g. a headless/agent shell with no browser), the script
 > automatically retries with `az login --use-device-code`. When the device-code path runs it
 > prints a `https://microsoft.com/devicelogin` URL and a one-time code — **surface that URL and
@@ -224,7 +187,7 @@ no account is cached, then emits the candidates as objects (`index`, `tenantId`,
 > are applied each run), or set those two `az config` values manually and retry. Never skip
 > tenant selection.
 
-#### B1. Authenticate against the FPA and set the tenant env var
+### Step 5c. Authenticate against the FPA and set the tenant env var
 
 Pass the confirmed `tenantId` to the `AuthAspm` phase. It runs the FPA-scoped `az login`
 (`--scope <fpa-app-id>/Defender.InteractiveLogin --allow-no-subscriptions`) and sets
@@ -242,7 +205,7 @@ Pass the confirmed `tenantId` to the `AuthAspm` phase. It runs the FPA-scoped `a
 
 ## After Installation
 
-Once `defender --version` succeeds, `defender agent --install` has run, and the required auth path is set up, return to the calling skill (e.g., `run-security-scan`) to continue the original task.
+Once `defender --version` succeeds, `defender agent --install` has run, and authentication is set up, return to the calling skill (e.g., `run-security-scan`) to continue the original task.
 
 ### Suggested next prompts
 
@@ -265,7 +228,6 @@ After any of these, the user can reply `fix` (or `fix #N #M`) to hand the top fi
 | `-Step Install` — `Invoke-WebRequest` download fails | Check network connectivity; verify `cli.dfd.security.azure.com` is reachable |
 | `-Step Install` — Authenticode `NotSigned` / `HashMismatch` / non-Microsoft signer | Do NOT proceed. The bundled script aborts automatically on Windows. Report failure to the user; re-run `-Step Install` to re-download and re-verify |
 | `-Step Verify` — `defender` not on PATH | Open a new terminal so the persistent PATH is picked up, then re-run `-Step Verify`. To patch the current session manually: Windows: `$env:PATH += ";$HOME\.mdc"`; Linux/macOS: `$env:PATH += ":$HOME/.mdc"` |
- | `-Step AuthLegacy` — "Missing required value(s)" | Gather `GDN_MDC_CLI_CLIENT_ID` / `GDN_MDC_CLI_TENANT_ID` from the user (issued by the DfD onboarding admin) and pass them as `-ClientId` / `-TenantId` |
  | `-Step AuthAspm` — `az login` fails with `AADSTS500011` | Wrong tenant. Re-run `-Step ListTenants`, have the user confirm the tenant, then re-run `-Step AuthAspm -TenantId <confirmed>` |
  | `-Step ListTenants` / `-Step AuthAspm` — az prompts to install the `account` extension (Y/n) or hangs | The `account` extension (for `az account tenant list`) is missing. The script auto-configures silent install; if you still see the prompt (older az / config not applied), run `az config set extension.use_dynamic_install=yes_without_prompt` and `az config set extension.dynamic_install_allow_preview=true`, then re-run the step. Do not bypass tenant selection. |
  | `-Step ListTenants` / `-Step AuthAspm` — `az login` hangs or fails with an interactive/browser prompt | A headless shell has no browser. The script tries browser login first and auto-falls back to `az login --use-device-code` after ~2 minutes; surface the printed `microsoft.com/devicelogin` URL + code to the user and wait for sign-in. Do not switch to a different login flow or use `az account list` to work around it. |

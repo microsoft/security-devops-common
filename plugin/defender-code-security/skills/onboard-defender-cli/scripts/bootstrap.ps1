@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Bootstraps the Defender for Cloud CLI (`defender`). Bundled plugin asset for the
+    Bootstraps the Defender CLI (`defender`). Bundled plugin asset for the
     onboard-defender-cli skill. Runs a single phase at a time, selected with -Step.
 
 .DESCRIPTION
@@ -16,34 +16,25 @@
 
 .PARAMETER Step
     Which phase to run:
-      EnsureAzureCli - install the Azure CLI (`az`) if missing. Needed only for Path B.
+      EnsureAzureCli - install the Azure CLI (`az`) if missing. Needed only for authentication.
       Install        - download Microsoft's InstallCli.ps1, verify its Authenticode
                        signature on Windows, then run it to install the `defender` binary.
       Verify         - confirm `defender --version` resolves on PATH.
       InstallSkills  - run `defender agent --install` to install the bundled Copilot skills.
-      AuthLegacy     - Path A. Persist GDN_MDC_CLI_* values and run `defender auth login`.
-      ListTenants    - Path B. Enumerate the Azure tenants the user can access (for selection).
-      AuthAspm       - Path B. Run the FPA-scoped `az login` and set DEFENDER_DFD_TENANT_ID.
+      ListTenants    - Enumerate the Azure tenants the user can access (for selection).
+      AuthAspm       - Run the FPA-scoped `az login` and set DEFENDER_DFD_TENANT_ID.
 
 .PARAMETER CliVersion
     Optional. Install a specific `defender` CLI version instead of latest. Install step only.
 
-.PARAMETER ClientId
-    AuthLegacy (Path A) only. The integration resource app's client id (user-supplied, issued by
-    the DfD onboarding admin). Falls back to $env:GDN_MDC_CLI_CLIENT_ID if omitted.
-
 .PARAMETER TenantId
-    AuthLegacy (Path A) and AuthAspm (Path B). The Azure tenant id (user-supplied / user-confirmed).
-    AuthLegacy falls back to $env:GDN_MDC_CLI_TENANT_ID if omitted; AuthAspm requires it explicitly.
+    AuthAspm only. The user-confirmed Azure tenant id for the FPA-scoped `az login`.
 
 .EXAMPLE
     ./bootstrap.ps1 -Step EnsureAzureCli
 
 .EXAMPLE
     ./bootstrap.ps1 -Step Install -CliVersion 3.0.12345
-
-.EXAMPLE
-    ./bootstrap.ps1 -Step AuthLegacy -ClientId <client-id> -TenantId <tenant-id>
 
 .EXAMPLE
     ./bootstrap.ps1 -Step ListTenants
@@ -53,16 +44,13 @@
 param(
     [Parameter(Mandatory)]
     [ValidateSet('EnsureAzureCli', 'Install', 'Verify', 'InstallSkills',
-                 'AuthLegacy', 'ListTenants', 'AuthAspm')]
+                 'ListTenants', 'AuthAspm')]
     [string] $Step,
 
     # Install step only.
     [string] $CliVersion,
 
-    # AuthLegacy (Path A): user-supplied; falls back to $env:GDN_MDC_CLI_CLIENT_ID.
-    [string] $ClientId,
-
-    # AuthLegacy (Path A) and AuthAspm (Path B): user-supplied / user-confirmed tenant id.
+    # AuthAspm: user-confirmed tenant id for the FPA-scoped `az login`.
     [string] $TenantId
 )
 
@@ -217,7 +205,7 @@ function Get-AzTenant {
     az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors 2>$null 1>$null
     az config set extension.dynamic_install_allow_preview=true --only-show-errors 2>$null 1>$null
     # Use `az account tenant list`, not `az account list`: the latter only returns tenants
-    # that have a subscription. Path B logs in with --allow-no-subscriptions, so the DfD
+    # that have a subscription. The FPA login uses --allow-no-subscriptions, so the DfD
     # data tenant may have none and would be invisible here. `az account tenant list`
     # enumerates every tenant the user can access regardless of subscriptions.
     $tenants = az account tenant list `
@@ -356,36 +344,6 @@ function Invoke-InstallSkills {
     Invoke-Native defender agent --install
 }
 
-function Invoke-AuthLegacy {
-    # User-supplied values; fall back to already-set env vars.
-    if (-not $ClientId) { $ClientId = $env:GDN_MDC_CLI_CLIENT_ID }
-    if (-not $TenantId) { $TenantId = $env:GDN_MDC_CLI_TENANT_ID }
-
-    $missing = @()
-    if (-not $ClientId) { $missing += 'ClientId (GDN_MDC_CLI_CLIENT_ID)' }
-    if (-not $TenantId) { $missing += 'TenantId (GDN_MDC_CLI_TENANT_ID)' }
-    if ($missing.Count -gt 0) {
-        throw ("Missing required value(s): $($missing -join ', '). These are issued by your DfD " +
-               "onboarding admin — gather them from the user, pass -ClientId/-TenantId, then retry.")
-    }
-
-    # Persist for future sessions + set in the current process.
-    $env:GDN_MDC_CLI_CLIENT_ID = $ClientId
-    $env:GDN_MDC_CLI_TENANT_ID = $TenantId
-    if (Test-IsWindows) {
-        [Environment]::SetEnvironmentVariable('GDN_MDC_CLI_CLIENT_ID', $ClientId, 'User')
-        [Environment]::SetEnvironmentVariable('GDN_MDC_CLI_TENANT_ID', $TenantId, 'User')
-    } else {
-        Add-PersistentExport 'GDN_MDC_CLI_CLIENT_ID' $ClientId
-        Add-PersistentExport 'GDN_MDC_CLI_TENANT_ID' $TenantId
-    }
-
-    # Run login + status through Invoke-Native so a cancelled/expired login (native
-    # non-zero exit) fails the phase instead of silently returning success.
-    Invoke-Native defender auth login --interactive-login
-    Invoke-Native defender auth status
-}
-
 function Invoke-ListTenants {
     # Emit the available tenants as objects so an agent can present the choice via its UI,
     # or a human can read the table and pass the chosen tenantId to -Step AuthAspm.
@@ -445,7 +403,6 @@ switch ($Step) {
     'Install'        { Invoke-Install }
     'Verify'         { Invoke-Verify }
     'InstallSkills'  { Invoke-InstallSkills }
-    'AuthLegacy'     { Invoke-AuthLegacy }
     'ListTenants'    { Invoke-ListTenants }
     'AuthAspm'       { Invoke-AuthAspm }
 }
