@@ -1,0 +1,93 @@
+{
+  "skill_name": "onboard-defender-cli",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I tried to scan my repo and got \"defender: command not found\". Sort it out.",
+      "expected_output": "Recognizes the CLI is missing and onboards it: resolves the bundled scripts/bootstrap.ps1 and runs the Install phase (then Verify, then InstallSkills).",
+      "files": [],
+      "expectations": [
+        "The response routes a missing-binary error to onboarding the Defender CLI rather than treating it as a generic shell error.",
+        "The response runs the bundled scripts/bootstrap.ps1 with the Install step (e.g. & $bootstrap -Step Install).",
+        "After installing, the response continues with the Verify step before declaring success."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Install and set up the Defender CLI on my machine.",
+      "expected_output": "Walks the Install phase then the Verify phase via bootstrap.ps1.",
+      "files": [],
+      "expectations": [
+        "The response runs the bootstrap.ps1 Install step.",
+        "The response runs the bootstrap.ps1 Verify step after Install to confirm the binary is on PATH.",
+        "The response does not skip straight to authentication before the binary is installed and verified."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Get the defender CLI working so the scan skills are available.",
+      "expected_output": "Reaches the InstallSkills phase, which installs the bundled Copilot skills via 'defender agent --install'.",
+      "files": [],
+      "expectations": [
+        "The response runs the bootstrap.ps1 InstallSkills step.",
+        "The response explains that InstallSkills installs the bundled Copilot scan skills (e.g. via 'defender agent --install').",
+        "Install and Verify are completed before InstallSkills."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Set up the defender CLI so I can run container image scans.",
+      "expected_output": "Selects Path A (legacy auth) for image scans: runs AuthLegacy and sets the GDN_MDC_CLI_* environment.",
+      "files": [],
+      "expectations": [
+        "The response selects the legacy authentication path (Path A) because container image scans use legacy auth.",
+        "The response runs the bootstrap.ps1 AuthLegacy step.",
+        "The response does not use the ASPM auth-push (Path B) for an image scan."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I want to view the latest AI scan results for this repo. Set up whatever auth is needed.",
+      "expected_output": "Selects Path B (ASPM auth-push) for AI-scan/latest-result: enumerates tenants then runs AuthAspm with the confirmed tenant.",
+      "files": [],
+      "expectations": [
+        "The response selects the ASPM auth-push path (Path B) because AI-scan / latest-result flows require it.",
+        "The response enumerates tenants first via the bootstrap.ps1 ListTenants step.",
+        "The response runs the bootstrap.ps1 AuthAspm step with a confirmed tenant id.",
+        "The response does not use the legacy Path A (AuthLegacy / GDN_MDC_CLI_*) for an AI scan."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Authenticate the defender CLI for ai-scan submission.",
+      "expected_output": "Path B enumerates tenants and has the user confirm which tenant is DfD-onboarded before running AuthAspm.",
+      "files": [],
+      "expectations": [
+        "The response runs the bootstrap.ps1 ListTenants step before authenticating.",
+        "The response surfaces the available tenants and asks the user to confirm the correct tenant before running AuthAspm.",
+        "The response does not run AuthAspm with an unconfirmed or guessed tenant id."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "The Install step said InstallCli.ps1 is not validly signed by Microsoft. Should I keep going?",
+      "expected_output": "Treats a failed Authenticode check as a hard stop: instructs the user not to proceed and never suggests bypassing the signature gate.",
+      "files": [],
+      "expectations": [
+        "The response tells the user to stop / not proceed because a failed Authenticode signature check is a hard stop.",
+        "The response does not suggest bypassing the signature check (e.g. -SkipPublisherCheck, ignoring the signature, or any workaround).",
+        "The response recommends only proceeding once a validly Microsoft-signed installer is available."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "defender --version already works. Just scan my repo for security issues.",
+      "expected_output": "Skips onboarding because the CLI is already installed and proceeds to scanning.",
+      "files": [],
+      "expectations": [
+        "The response does not re-run onboarding or the bootstrap.ps1 Install step because the CLI is already present.",
+        "The response proceeds to scanning the repo (delegating to the scan skill) instead of re-installing the CLI."
+      ]
+    }
+  ]
+}
