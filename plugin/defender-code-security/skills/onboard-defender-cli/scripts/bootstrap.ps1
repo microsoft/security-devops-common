@@ -22,13 +22,13 @@
       Verify         - confirm `defender --version` resolves on PATH.
       InstallSkills  - run `defender agent --install` to install the bundled Copilot skills.
       ListTenants    - Enumerate the Azure tenants the user can access (for selection).
-      AuthAspm       - Run the FPA-scoped `az login` and set DEFENDER_DFD_TENANT_ID.
+      AuthAspm       - Run `az login` for the selected tenant and set DEFENDER_DFD_TENANT_ID.
 
 .PARAMETER CliVersion
     Optional. Install a specific `defender` CLI version instead of latest. Install step only.
 
 .PARAMETER TenantId
-    AuthAspm only. The user-confirmed Azure tenant id for the FPA-scoped `az login`.
+    AuthAspm only. The user-confirmed Azure tenant id for `az login`.
 
 .EXAMPLE
     ./bootstrap.ps1 -Step EnsureAzureCli
@@ -50,7 +50,7 @@ param(
     # Install step only.
     [string] $CliVersion,
 
-    # AuthAspm: user-confirmed tenant id for the FPA-scoped `az login`.
+    # AuthAspm: user-confirmed tenant id for `az login`.
     [string] $TenantId
 )
 
@@ -58,9 +58,6 @@ $ErrorActionPreference = 'Stop'
 
 $InstallScriptUrl = 'https://cli.dfd.security.azure.com/public/v2/latest/InstallCli.ps1'
 $BaseUrlValue     = 'cli.dfd.security.azure.com'
-
-# DfD First-Party Application (FPA) app id — published constant. Update if the FPA is rotated.
-$FpaAppId = 'b1a78a13-a596-4366-b37d-406048fa4a23'
 
 function Test-IsWindows {
     # $IsWindows is PowerShell Core only; on Windows PowerShell 5.1 it is $null,
@@ -86,7 +83,7 @@ function Invoke-Native {
 function Invoke-AzLogin {
     # Run an interactive browser `az login`. The onboarding flow deliberately uses the
     # interactive browser flow ONLY — it does not fall back to the device-code flow. The
-    # same login args (tenant / scope / --allow-no-subscriptions / ...) are passed through.
+    # same login args (tenant / --allow-no-subscriptions / ...) are passed through.
     # `az login` opens the system browser; if no browser is available the command fails
     # loudly (via Invoke-Native) rather than silently switching to a different flow.
     param(
@@ -348,15 +345,14 @@ function Invoke-AuthAspm {
                "(not the index) of the DfD-onboarded tenant.")
     }
 
-    # FPA-scoped login: the --scope <fpa-app-id>/Defender.InteractiveLogin requests a delegated
-    # token whose `aud` is the FPA. --allow-no-subscriptions is required because the FPA app is
-    # not bound to any Azure subscription. A generic `az login` will not produce an accepted token.
+    # Log in to the selected tenant without selecting a resource scope. The Defender CLI obtains
+    # the token it needs from the Azure CLI cache. --allow-no-subscriptions supports data tenants
+    # that do not have an Azure subscription.
     # Invoke-AzLogin runs an interactive browser login (no device-code fallback). It runs through
     # Invoke-Native, so a failed/cancelled login (e.g. wrong tenant / AADSTS500011) throws and does
     # NOT fall through to persist a bad DEFENDER_DFD_TENANT_ID.
     Invoke-AzLogin `
         --tenant $TenantId `
-        --scope "$FpaAppId/Defender.InteractiveLogin" `
         --allow-no-subscriptions
 
     $env:DEFENDER_DFD_TENANT_ID = $TenantId
