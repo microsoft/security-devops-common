@@ -124,7 +124,7 @@ your agent.
 
 ## Step 5: Authenticate
 
-Authentication signs the CLI in to the DfD First-Party App (FPA) via an interactive `az login`,
+Authentication signs the CLI in via an interactive `az login`,
 and is required **only** for the ASPM-backed commands — `defender status result --latest` and
 `defender scan ai-scan *`. No client secret is needed. Set it up now during onboarding.
 
@@ -157,11 +157,11 @@ and retry — authentication cannot proceed without `az`.
 
 ### Step 5b. Select the tenant
 
-The FPA-scoped login needs the tenant id of the tenant to use. List the tenants the
+The login needs the tenant id of the tenant to use. List the tenants the
 user can access with the bundled script's `ListTenants` phase — it runs a baseline `az login` if
 no account is cached, then emits the candidates as objects (`index`, `tenantId`, `label`, ...):
 
-> **Logins use the interactive browser flow only.** Both the baseline login here and the FPA
+> **Logins use the interactive browser flow only.** Both the baseline login here and the tenant
 > login in Step 5c run an interactive browser `az login` — there is **no device-code fallback**.
 > `az login` opens the system browser for the user to sign in; if no browser is available (e.g. a
 > headless/agent shell) the login fails loudly rather than switching flows. Run onboarding where a
@@ -186,18 +186,17 @@ no account is cached, then emits the candidates as objects (`index`, `tenantId`,
 > are applied each run), or set those two `az config` values manually and retry. Never skip
 > tenant selection.
 
-### Step 5c. Authenticate against the FPA and set the tenant env var
+### Step 5c. Authenticate and set the tenant env var
 
-Pass the confirmed `tenantId` to the `AuthAspm` phase. It runs the FPA-scoped `az login`
-(`--scope <fpa-app-id>/Defender.InteractiveLogin --allow-no-subscriptions`) and sets
+Pass the confirmed `tenantId` to the `AuthAspm` phase. It runs `az login` for that tenant
+without selecting a resource scope and sets
 `DEFENDER_DFD_TENANT_ID` (session + persistent):
 
 ```powershell
 & $bootstrap -Step AuthAspm -TenantId "<confirmed-tenant-id>"
 ```
 
-- The FPA app id is a published constant baked into `bootstrap.ps1`; update it there if the FPA is rotated.
-- `--allow-no-subscriptions` is required because the FPA app is not bound to any Azure subscription; a generic `az login` will not produce a token the router accepts.
+- `--allow-no-subscriptions` supports DfD data tenants that are not bound to an Azure subscription.
 - The signed-in user must be granted the FPA roles `AiScan.Upload.Role` and `AiScan.Enabled.Role` by an admin.
 
 > Do **not** set `DEFENDER_ASPM_CLIENT_ID` or `DEFENDER_ASPM_CLIENT_SECRET` in this flow — their presence makes the CLI prefer the client-credentials path and ignore the `az` cache.

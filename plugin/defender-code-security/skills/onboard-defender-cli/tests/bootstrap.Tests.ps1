@@ -168,7 +168,7 @@ Describe 'Invoke-AuthAspm (Path B)' {
         $TenantId = $null
         Mock Test-IsWindows { $false }
         Mock Add-PersistentExport {}
-        # Invoke-AuthAspm runs the FPA-scoped `az login` through Invoke-Native.
+        # Invoke-AuthAspm runs `az login` through Invoke-Native.
         Mock Invoke-Native {}
         Mock Get-AzTenant {
             @(
@@ -191,7 +191,11 @@ Describe 'Invoke-AuthAspm (Path B)' {
         $TenantId = '11111111-1111-1111-1111-111111111111'
         Invoke-AuthAspm
         $env:DEFENDER_DFD_TENANT_ID | Should -Be '11111111-1111-1111-1111-111111111111'
-        Should -Invoke Invoke-Native -Times 1
+        Should -Invoke Invoke-Native -Times 1 -ParameterFilter {
+            $FilePath -eq 'az' -and
+            ($Arguments -join ' ') -eq
+                'login --tenant 11111111-1111-1111-1111-111111111111 --allow-no-subscriptions'
+        }
         Should -Invoke Add-PersistentExport -Times 1
     }
 
